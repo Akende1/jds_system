@@ -1,0 +1,232 @@
+{% extends 'base_frontend.html' %}
+
+{% block title %}Bursar Dashboard - School Management System{% endblock %}
+
+{% block page_title %}Bursar Dashboard{% endblock %}
+
+{% block content %}
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="stat-icon" style="background: rgba(25, 135, 84, 0.1); color: #198754;">
+                    <i class="bi bi-cash-coin"></i>
+                </div>
+                <div class="stat-value">K {{ today_collections.total|floatformat:2 }}</div>
+                <div class="stat-label">Today's Collections</div>
+                <small class="text-muted">{{ today_collections.count }} payments</small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="stat-icon" style="background: rgba(13, 110, 253, 0.1); color: #0d6efd;">
+                    <i class="bi bi-calendar-week"></i>
+                </div>
+                <div class="stat-value">K {{ week_collections.total|floatformat:2 }}</div>
+                <div class="stat-label">This Week</div>
+                <small class="text-muted">{{ week_collections.count }} payments</small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="stat-icon" style="background: rgba(220, 53, 69, 0.1); color: #dc3545;">
+                    <i class="bi bi-exclamation-triangle"></i>
+                </div>
+                <div class="stat-value">K {{ total_outstanding|floatformat:2 }}</div>
+                <div class="stat-label">Total Outstanding</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="stat-icon" style="background: rgba(255, 193, 7, 0.1); color: #ffc107;">
+                    <i class="bi bi-people"></i>
+                </div>
+                <div class="stat-value">{{ debtors_count }}</div>
+                <div class="stat-label">Students with Balance</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-6">
+        <div class="card data-table">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Recent Payments</h5>
+                <a href="{% url 'frontend:payment_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Receipt #</th>
+                                <th>Student</th>
+                                <th>Amount</th>
+                                <th>Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for payment in recent_payments %}
+                            <tr>
+                                <td>{{ payment.receipt_number }}</td>
+                                <td>{{ payment.invoice.student.get_full_name }}</td>
+                                <td class="text-success fw-bold">K {{ payment.amount|floatformat:2 }}</td>
+                                <td>{{ payment.payment_date|date:"g:i A" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-4">No payments yet today</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Balances by Grade</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="balancesByGradeChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mt-2">
+    <div class="col-md-12">
+        <div class="card data-table">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Top 10 Debtors</h5>
+                <div>
+                    <button class="btn btn-sm btn-warning">
+                        <i class="bi bi-envelope"></i> Send Reminders
+                    </button>
+                    <a href="{% url 'frontend:arrears_list' %}" class="btn btn-sm btn-outline-primary">View All Arrears</a>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Admission #</th>
+                                <th>Student Name</th>
+                                <th>Grade</th>
+                                <th>Total Balance</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for debtor in top_debtors %}
+                            <tr>
+                                <td>{{ debtor.admission_number }}</td>
+                                <td>{{ debtor.get_full_name }}</td>
+                                <td>{{ debtor.grade.name }}</td>
+                                <td class="text-danger fw-bold">K {{ debtor.total_balance|floatformat:2 }}</td>
+                                <td>
+                                    <a href="{% url 'frontend:student_account' debtor.id %}" class="btn btn-sm btn-outline-primary">View Account</a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center text-success py-4">
+                                    <i class="bi bi-check-circle" style="font-size: 2rem;"></i><br>
+                                    All accounts clear!
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mt-2">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <a href="{% url 'frontend:payment_record' %}" class="btn btn-primary w-100 p-3">
+                            <i class="bi bi-cash-coin"></i><br>Record Payment
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="{% url 'frontend:accounts_list' %}" class="btn btn-outline-primary w-100 p-3">
+                            <i class="bi bi-list-ul"></i><br>View All Accounts
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="{% url 'frontend:arrears_list' %}" class="btn btn-outline-danger w-100 p-3">
+                            <i class="bi bi-exclamation-circle"></i><br>Arrears Report
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="{% url 'frontend:expense_add' %}" class="btn btn-outline-secondary w-100 p-3">
+                            <i class="bi bi-wallet2"></i><br>Record Expense
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Balances by Grade Chart
+    const ctx = document.getElementById('balancesByGradeChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: [{% for item in balances_by_grade %}'{{ item.grade__name }}'{% if not forloop.last %}, {% endif %}{% endfor %}],
+            datasets: [{
+                label: 'Outstanding Balance (K)',
+                data: [{% for item in balances_by_grade %}{{ item.total_balance|default:0 }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+                backgroundColor: 'rgba(220, 53, 69, 0.7)',
+                borderRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return 'K ' + value.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

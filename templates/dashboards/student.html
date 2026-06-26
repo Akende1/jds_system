@@ -1,0 +1,235 @@
+{% extends 'base_frontend.html' %}
+
+{% block title %}Student Portal - School Management System{% endblock %}
+
+{% block page_title %}Student Portal{% endblock %}
+
+{% block content %}
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card stat-card h-100">
+            <div class="card-body">
+                <div class="stat-icon" style="background: rgba(13, 110, 253, 0.1); color: #0d6efd;">
+                    <i class="bi bi-receipt"></i>
+                </div>
+                <div class="stat-value">K {{ combined_total_invoiced|floatformat:2 }}</div>
+                <div class="stat-label">Total Invoiced</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card h-100">
+            <div class="card-body">
+                <div class="stat-icon" style="background: rgba(25, 135, 84, 0.1); color: #198754;">
+                    <i class="bi bi-cash-coin"></i>
+                </div>
+                <div class="stat-value">K {{ combined_total_paid|floatformat:2 }}</div>
+                <div class="stat-label">Total Paid</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card h-100">
+            <div class="card-body">
+                <div class="stat-icon" style="background: rgba(220, 53, 69, 0.1); color: #dc3545;">
+                    <i class="bi bi-exclamation-circle"></i>
+                </div>
+                <div class="stat-value">K {{ combined_total_outstanding|floatformat:2 }}</div>
+                <div class="stat-label">Outstanding Balance</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card h-100">
+            <div class="card-body">
+                <div class="stat-icon" style="background: rgba(111, 66, 193, 0.1); color: #6f42c1;">
+                    <i class="bi bi-calendar-check"></i>
+                </div>
+                <div class="stat-value">{{ combined_attendance_rate|floatformat:1 }}%</div>
+                <div class="stat-label">Combined Attendance</div>
+                <small class="text-muted">{{ combined_attendance_present }}/{{ combined_attendance_total_days }} days</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-12">
+        <div class="card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+            <div class="card-body">
+                <h3>Welcome back, {{ request.user.first_name }}!</h3>
+                <p class="mb-0">{{ request.user.student.grade.name }} - {{ request.user.student.current_class.name }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="stat-icon" style="background: rgba(13, 110, 253, 0.1); color: #0d6efd;">
+                    <i class="bi bi-calendar-check"></i>
+                </div>
+                <div class="stat-value">{{ attendance.rate|floatformat:1 }}%</div>
+                <div class="stat-label">Attendance Rate</div>
+                <small class="text-muted">{{ attendance.present }}/{{ attendance.total_days }} days</small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="stat-icon" style="background: rgba(255, 193, 7, 0.1); color: #ffc107;">
+                    <i class="bi bi-journal-text"></i>
+                </div>
+                <div class="stat-value">{{ assignments_due|length }}</div>
+                <div class="stat-label">Assignments Due</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="stat-icon" style="background: rgba(25, 135, 84, 0.1); color: #198754;">
+                    <i class="bi bi-trophy"></i>
+                </div>
+                <div class="stat-value">{{ recent_results|length }}</div>
+                <div class="stat-label">Recent Results</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="stat-icon" style="background: rgba(220, 53, 69, 0.1); color: #dc3545;">
+                    <i class="bi bi-clock"></i>
+                </div>
+                <div class="stat-value">{{ todays_classes|length }}</div>
+                <div class="stat-label">Classes Today</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Today's Classes</h5>
+            </div>
+            <div class="card-body">
+                {% for class in todays_classes %}
+                <div class="mb-2 p-3" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 0.5rem; color: white;">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <div class="fw-bold">{{ class.subject }}</div>
+                            <div class="small">{{ class.teacher }}</div>
+                        </div>
+                        <div class="text-end">
+                            <div>{{ class.start_time }} - {{ class.end_time }}</div>
+                            <div class="small">{{ class.room }}</div>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-center text-muted py-4">No classes scheduled for today</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card data-table">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Assignments Due</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Assignment</th>
+                                <th>Subject</th>
+                                <th>Due Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for assignment in assignments_due %}
+                            <tr>
+                                <td>{{ assignment.title }}</td>
+                                <td>{{ assignment.subject.name }}</td>
+                                <td>
+                                    {% if assignment.due_date < today %}
+                                        <span class="badge bg-danger">Overdue</span>
+                                    {% elif assignment.due_date == today %}
+                                        <span class="badge bg-warning">Due Today</span>
+                                    {% else %}
+                                        <span class="badge bg-info">{{ assignment.due_date|date:"M d" }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3" class="text-center text-muted py-4">No pending assignments</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mt-2">
+    <div class="col-md-12">
+        <div class="card data-table">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Recent Exam Results</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Exam</th>
+                                <th>Subject</th>
+                                <th>Date</th>
+                                <th>Score</th>
+                                <th>Grade</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for result in recent_results %}
+                            <tr>
+                                <td>{{ result.exam.exam_name }}</td>
+                                <td>{{ result.exam.subject.name }}</td>
+                                <td>{{ result.exam.exam_date|date:"M d, Y" }}</td>
+                                <td>
+                                    {% if result.score >= 75 %}
+                                        <span class="badge bg-success">{{ result.score }}%</span>
+                                    {% elif result.score >= 50 %}
+                                        <span class="badge bg-info">{{ result.score }}%</span>
+                                    {% else %}
+                                        <span class="badge bg-warning">{{ result.score }}%</span>
+                                    {% endif %}
+                                </td>
+                                <td><strong>{{ result.grade }}</strong></td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-4">No exam results yet</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

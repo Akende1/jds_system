@@ -1,0 +1,47 @@
+{% extends "emails/base_email.html" %}
+
+{% block content %}
+<div class="header">
+    <h1>Payment Receipt</h1>
+</div>
+
+<div class="content">
+    <p>Dear Parent/Guardian,</p>
+    
+    <p>Thank you for your payment. This email confirms that we have received your payment for <strong>{{ student_name }}</strong>.</p>
+    
+    <table class="info-table">
+        <tr>
+            <td>Receipt Number:</td>
+            <td><strong>{{ receipt_number }}</strong></td>
+        </tr>
+        <tr>
+            <td>Student Name:</td>
+            <td>{{ student_name }}</td>
+        </tr>
+        <tr>
+            <td>Payment Date:</td>
+            <td>{{ payment_date|date:"F d, Y" }}</td>
+        </tr>
+        <tr>
+            <td>Amount Paid:</td>
+            <td><strong>₦{{ amount|floatformat:2 }}</strong></td>
+        </tr>
+        <tr>
+            <td>Payment Method:</td>
+            <td>{{ payment_method }}</td>
+        </tr>
+    </table>
+    
+    <div class="amount">
+        Amount Paid: ₦{{ amount|floatformat:2 }}
+    </div>
+    
+    <p>A PDF receipt is attached to this email for your records.</p>
+    
+    <p>If you have any questions regarding this payment, please contact the school finance office.</p>
+    
+    <p>Best regards,<br>
+    <strong>School Finance Department</strong></p>
+</div>
+{% endblock %}

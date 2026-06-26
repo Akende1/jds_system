@@ -1,0 +1,167 @@
+{% extends 'base_frontend.html' %}
+
+{% block title %}Salary Details - JDS Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2><i class="bi bi-receipt text-warning"></i> Salary Details</h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'frontend:dashboard' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'frontend:financial_overview' %}">Financial</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'frontend:salary_list' %}">Salaries</a></li>
+                    <li class="breadcrumb-item active">Details</li>
+                </ol>
+            </nav>
+        </div>
+        <button onclick="window.print()" class="btn btn-primary">
+            <i class="bi bi-printer"></i> Print
+        </button>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Salary Info Card -->
+            <div class="card mb-4">
+                <div class="card-header bg-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Salary Breakdown</h5>
+                        {% if salary.status == 'paid' %}
+                        <span class="badge bg-success">Paid</span>
+                        {% elif salary.status == 'pending' %}
+                        <span class="badge bg-warning">Pending</span>
+                        {% else %}
+                        <span class="badge bg-secondary">{{ salary.status|title }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Staff:</strong> {{ salary.staff.user.get_full_name }}<br>
+                            <strong>Position:</strong> {{ salary.staff.position }}<br>
+                            <strong>Department:</strong> {{ salary.staff.department }}
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <strong>Month:</strong> {{ salary.month|date:"F Y" }}<br>
+                            <strong>Generated:</strong> {{ salary.created_at|date:"d M Y" }}
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <!-- Earnings -->
+                    <h6 class="text-success mb-3">Earnings</h6>
+                    <table class="table table-sm">
+                        <tr>
+                            <td>Basic Salary</td>
+                            <td class="text-end">K {{ salary.basic_salary|floatformat:2 }}</td>
+                        </tr>
+                        {% for earning in earnings %}
+                        <tr>
+                            <td>{{ earning.component.name }}</td>
+                            <td class="text-end">K {{ earning.amount|floatformat:2 }}</td>
+                        </tr>
+                        {% endfor %}
+                        <tr class="table-active">
+                            <td><strong>Total Earnings</strong></td>
+                            <td class="text-end"><strong>K {{ salary.gross_salary|floatformat:2 }}</strong></td>
+                        </tr>
+                    </table>
+
+                    <hr>
+
+                    <!-- Deductions -->
+                    <h6 class="text-danger mb-3">Deductions</h6>
+                    <table class="table table-sm">
+                        {% for deduction in deductions %}
+                        <tr>
+                            <td>{{ deduction.component.name }}</td>
+                            <td class="text-end">K {{ deduction.amount|floatformat:2 }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="2" class="text-muted text-center">No deductions</td>
+                        </tr>
+                        {% endfor %}
+                        <tr class="table-active">
+                            <td><strong>Total Deductions</strong></td>
+                            <td class="text-end"><strong>K {{ salary.total_deductions|floatformat:2 }}</strong></td>
+                        </tr>
+                    </table>
+
+                    <hr>
+
+                    <!-- Net Salary -->
+                    <div class="text-end">
+                        <h5>Net Salary: <span class="text-success">K {{ salary.net_salary|floatformat:2 }}</span></h5>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Information -->
+            {% if salary.status == 'paid' %}
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Payment Information</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-4">Payment Date:</dt>
+                        <dd class="col-sm-8">{{ salary.payment_date|date:"d F Y"|default:"Not paid yet" }}</dd>
+
+                        <dt class="col-sm-4">Payment Method:</dt>
+                        <dd class="col-sm-8">{{ salary.payment_method|default:"Not specified" }}</dd>
+
+                        <dt class="col-sm-4">Reference Number:</dt>
+                        <dd class="col-sm-8">{{ salary.payment_reference|default:"-" }}</dd>
+                    </dl>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Quick Summary -->
+            <div class="card mb-3">
+                <div class="card-body text-center">
+                    <h6 class="text-muted">Gross Salary</h6>
+                    <h3>K {{ salary.gross_salary|floatformat:2 }}</h3>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-body text-center">
+                    <h6 class="text-muted">Total Deductions</h6>
+                    <h3 class="text-danger">K {{ salary.total_deductions|floatformat:2 }}</h3>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-body text-center">
+                    <h6 class="text-muted">Net Salary</h6>
+                    <h3 class="text-success">K {{ salary.net_salary|floatformat:2 }}</h3>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h6 class="mb-0">Actions</h6>
+                </div>
+                <div class="card-body">
+                    <a href="{% url 'frontend:staff_detail' salary.staff.id %}" class="btn btn-outline-primary w-100 mb-2">
+                        <i class="bi bi-person"></i> View Staff Profile
+                    </a>
+                    <a href="{% url 'frontend:salary_list' %}" class="btn btn-outline-secondary w-100">
+                        <i class="bi bi-arrow-left"></i> Back to List
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

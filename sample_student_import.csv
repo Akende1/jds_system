@@ -1,0 +1,6 @@
+first_name,last_name,date_of_birth,gender,class_name,email,phone_number,address,nationality,religion,blood_group,emergency_contact,password
+John,Doe,2010-05-15,M,Grade 1A,john.doe@email.com,08012345678,"123 Main St, Lagos",Nigerian,Christianity,O+,08098765432,student123
+Jane,Smith,2011-03-20,F,Grade 1A,jane.smith@email.com,08023456789,"456 Park Ave, Abuja",Nigerian,Islam,A+,08087654321,student123
+Michael,Johnson,2010-11-08,M,Grade 2B,michael.j@email.com,08034567890,"789 Oak Rd, Port Harcourt",Nigerian,Christianity,B+,08076543210,student123
+Sarah,Williams,2009-07-12,F,Grade 3A,sarah.w@email.com,08045678901,"321 Elm St, Kano",Nigerian,Islam,AB+,08065432109,student123
+David,Brown,2012-01-25,M,Grade 1B,david.b@email.com,08056789012,"654 Pine Ave, Ibadan",Nigerian,Christianity,O-,08054321098,student123

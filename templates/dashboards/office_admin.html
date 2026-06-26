@@ -1,0 +1,122 @@
+{% extends 'base_frontend.html' %}
+
+{% block title %}Office Admin Dashboard - School Management System{% endblock %}
+
+{% block page_title %}Office Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="stat-icon" style="background: rgba(13, 110, 253, 0.1); color: #0d6efd;">
+                    <i class="bi bi-person-plus"></i>
+                </div>
+                <div class="stat-value">{{ new_registrations }}</div>
+                <div class="stat-label">New Registrations (7 days)</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="stat-icon" style="background: rgba(255, 193, 7, 0.1); color: #ffc107;">
+                    <i class="bi bi-file-earmark-text"></i>
+                </div>
+                <div class="stat-value">{{ pending_invoices }}</div>
+                <div class="stat-label">Pending Invoices</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="stat-icon" style="background: rgba(25, 135, 84, 0.1); color: #198754;">
+                    <i class="bi bi-megaphone"></i>
+                </div>
+                <div class="stat-value">{{ announcements_count }}</div>
+                <div class="stat-label">Active Announcements</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="stat-icon" style="background: rgba(220, 53, 69, 0.1); color: #dc3545;">
+                    <i class="bi bi-calendar-x"></i>
+                </div>
+                <div class="stat-value">{{ fee_deadlines_count }}</div>
+                <div class="stat-label">Upcoming Deadlines</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Recent Announcements</h5>
+                <button class="btn btn-sm btn-primary">New Announcement</button>
+            </div>
+            <div class="card-body">
+                {% for announcement in announcements %}
+                <div class="mb-3 p-3" style="background: #f8f9fa; border-radius: 0.5rem;">
+                    <div class="d-flex justify-content-between">
+                        <div class="fw-bold">{{ announcement.title }}</div>
+                        <small class="text-muted">{{ announcement.created_at|date:"M d, Y" }}</small>
+                    </div>
+                    <p class="mb-1 mt-2">{{ announcement.content|truncatewords:30 }}</p>
+                    <div class="small text-muted">
+                        <i class="bi bi-people"></i> {{ announcement.target_audience }}
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-center text-muted py-4">No recent announcements</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Upcoming Fee Deadlines</h5>
+            </div>
+            <div class="card-body">
+                {% for deadline in fee_deadlines %}
+                <div class="mb-2 p-3" style="background: #fff3cd; border-radius: 0.5rem;">
+                    <div class="fw-bold">{{ deadline.fee_type }}</div>
+                    <div class="text-muted small">Grade {{ deadline.grade.name }}</div>
+                    <div class="text-danger small">
+                        <i class="bi bi-calendar-event"></i> {{ deadline.due_date|date:"M d, Y" }}
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-center text-muted py-3">No upcoming deadlines</p>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <a href="{% url 'frontend:student_register' %}" class="btn btn-outline-primary w-100 mb-2">
+                    <i class="bi bi-person-plus"></i> Register Student
+                </a>
+                <a href="{% url 'frontend:invoice_generate' %}" class="btn btn-outline-success w-100 mb-2">
+                    <i class="bi bi-file-earmark-plus"></i> Generate Invoices
+                </a>
+                <button class="btn btn-outline-info w-100">
+                    <i class="bi bi-megaphone"></i> New Announcement
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

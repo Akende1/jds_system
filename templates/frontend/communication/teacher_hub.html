@@ -1,0 +1,179 @@
+{% extends 'base_frontend.html' %}
+
+{% block title %}Teacher Communications{% endblock %}
+
+{% block content %}
+<div>
+    <div class="mb-4">
+        <h2><i class="bi bi-chat-dots text-primary"></i> Parent Communications</h2>
+        <p class="text-muted mb-0">Send parent-focused messages, request meetings, and track items waiting for approval.</p>
+    </div>
+
+    <div class="summary-grid mb-4">
+        <article class="stat-card">
+            <div class="card-body">
+                <p class="stat-label">My Announcements</p>
+                <h3 class="stat-value">{{ my_announcements|length }}</h3>
+                <span class="stat-icon-wrap"><i class="bi bi-megaphone"></i></span>
+            </div>
+        </article>
+        <article class="stat-card">
+            <div class="card-body">
+                <p class="stat-label">My Messages</p>
+                <h3 class="stat-value">{{ my_messages|length }}</h3>
+                <span class="stat-icon-wrap"><i class="bi bi-chat-dots"></i></span>
+            </div>
+        </article>
+        <article class="stat-card">
+            <div class="card-body">
+                <p class="stat-label">My Appointments</p>
+                <h3 class="stat-value">{{ my_appointments|length }}</h3>
+                <span class="stat-icon-wrap"><i class="bi bi-calendar2-check"></i></span>
+            </div>
+        </article>
+    </div>
+
+    <div class="form-card form-card-narrow mb-4">
+            <h5 class="mb-3">Request Parent Announcement</h5>
+            <form method="post" class="form-grid">
+                {% csrf_token %}
+                <input type="hidden" name="action_type" value="announcement">
+                <div>
+                    <label class="form-label">Title</label>
+                    <input type="text" name="title" class="form-control" placeholder="Title" required>
+                </div>
+                <div>
+                    <label class="form-label">Priority</label>
+                    <select name="priority" class="form-select">
+                        <option value="normal">Normal</option>
+                        <option value="high">High</option>
+                        <option value="urgent">Urgent</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label">Audience</label>
+                    <input type="text" class="form-control" value="Parents Only" disabled>
+                </div>
+                <div class="full-width">
+                    <label class="form-label">Content</label>
+                    <textarea name="content" class="form-control" rows="4" placeholder="Announcement content for parents" required></textarea>
+                </div>
+                <div class="full-width form-actions">
+                    <button class="btn btn-primary" type="submit">Submit for Approval</button>
+                </div>
+            </form>
+    </div>
+
+    <div class="form-card form-card-narrow mb-4">
+            <h5 class="mb-3">Message a Parent</h5>
+            <form method="post" class="form-grid">
+                {% csrf_token %}
+                <input type="hidden" name="action_type" value="message">
+                <div>
+                    <label class="form-label">Recipient Parent</label>
+                    <select name="recipient" class="form-select" required>
+                        <option value="">Select parent</option>
+                        {% for parent in parent_users %}
+                        <option value="{{ parent.id }}">{{ parent.get_full_name|default:parent.username }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label">Subject</label>
+                    <input type="text" name="subject" class="form-control" placeholder="Subject" required>
+                </div>
+                <div class="full-width">
+                    <label class="form-label">Message Body</label>
+                    <textarea name="body" class="form-control" rows="4" placeholder="Message body" required></textarea>
+                </div>
+                <div class="full-width form-actions">
+                    <button class="btn btn-primary" type="submit">Submit for Approval</button>
+                </div>
+            </form>
+    </div>
+
+    <div class="form-card form-card-narrow mb-4" id="appointments">
+            <h5 class="mb-3">Schedule Appointment</h5>
+            <p class="text-muted">This request is routed to management for approval.</p>
+            <form method="post" class="form-grid">
+                {% csrf_token %}
+                <input type="hidden" name="action_type" value="appointment">
+                <div>
+                    <label class="form-label">Preferred Date</label>
+                    <input type="date" name="preferred_date" class="form-control" required>
+                </div>
+                <div>
+                    <label class="form-label">Preferred Time</label>
+                    <input type="time" name="preferred_time" class="form-control">
+                </div>
+                <div>
+                    <label class="form-label">Duration (Minutes)</label>
+                    <input type="number" min="15" step="15" name="duration_minutes" class="form-control" value="30">
+                </div>
+                <div class="full-width">
+                    <label class="form-label">Subject</label>
+                    <input type="text" name="subject" class="form-control" placeholder="Meeting subject" required>
+                </div>
+                <div class="full-width">
+                    <label class="form-label">Details</label>
+                    <textarea name="details" class="form-control" rows="4" placeholder="Describe the discussion topic" required></textarea>
+                </div>
+                <div class="full-width">
+                    <label class="form-label">Location</label>
+                    <input type="text" name="location" class="form-control" placeholder="Location">
+                </div>
+                <div class="full-width form-actions">
+                    <button class="btn btn-primary" type="submit">Request Appointment</button>
+                </div>
+            </form>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h5 class="mb-3">My Recent Announcements</h5>
+                    {% for item in my_announcements %}
+                    <div class="border rounded-3 p-3 mb-2">
+                        <div class="fw-semibold">{{ item.title }}</div>
+                        <div class="text-muted small">{{ item.get_approval_status_display }}</div>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted mb-0">No announcements submitted yet.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h5 class="mb-3">My Recent Messages</h5>
+                    {% for item in my_messages %}
+                    <div class="border rounded-3 p-3 mb-2">
+                        <div class="fw-semibold">{{ item.subject }}</div>
+                        <div class="text-muted small">{{ item.get_approval_status_display }}</div>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted mb-0">No messages submitted yet.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h5 class="mb-3">My Recent Appointments</h5>
+                    {% for item in my_appointments %}
+                    <div class="border rounded-3 p-3 mb-2">
+                        <div class="fw-semibold">{{ item.subject }}</div>
+                        <div class="text-muted small">{{ item.get_status_display }}</div>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted mb-0">No appointment requests yet.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

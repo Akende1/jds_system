@@ -1,0 +1,85 @@
+{% extends 'base_frontend.html' %}
+
+{% block title %}Exams - JDS Management{% endblock %}
+
+{% block page_title %}
+<i class="bi bi-clipboard-check text-primary"></i> Exams
+{% endblock %}
+
+{% block breadcrumb %}
+<ol class="breadcrumb breadcrumb-custom mb-0">
+    <li class="breadcrumb-item"><a href="{% url 'frontend:dashboard' %}">Dashboard</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'frontend:academics_home' %}">Academics</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Exams</li>
+</ol>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <!-- Title and breadcrumb handled in base template -->
+        </div>
+        <a href="{% url 'frontend:exam_create' %}" class="btn btn-primary">
+            <i class="bi bi-journal-plus"></i> Log Exam
+        </a>
+    </div>
+
+    <!-- Exams List -->
+    <div class="card">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">All Exams</h5>
+        </div>
+        <div class="card-body">
+            {% if exams %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Exam Title</th>
+                            <th>Subject</th>
+                            <th>Class</th>
+                            <th>Date</th>
+                            <th>Duration</th>
+                            <th>Total Marks</th>
+                            <th>Term</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for exam in exams %}
+                        <tr>
+                            <td><strong>{{ exam.name }}</strong></td>
+                            <td>{{ exam.subject.name }}</td>
+                            <td>{{ exam.classroom }}</td>
+                            <td>{{ exam.exam_date|date:"M d, Y" }}</td>
+                            <td>{{ exam.duration_minutes }} mins</td>
+                            <td>{{ exam.max_marks }}</td>
+                            <td>{{ exam.term }}</td>
+                            <td>
+                                {% if exam.is_administered %}
+                                    <span class="badge bg-success">Administered</span>
+                                {% else %}
+                                    <span class="badge bg-warning text-dark">Pending</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'frontend:exam_score_entry' exam.id %}" class="btn btn-sm btn-outline-primary {% if not exam.is_administered %}disabled{% endif %}">Scores</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-clipboard-x text-muted" style="font-size: 3rem;"></i>
+                <p class="text-muted mt-3">No exams found.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,192 @@
+{% extends 'base_frontend.html' %}
+
+{% block title %}Student List - School Management System{% endblock %}
+
+{% block page_title %}Student Management{% endblock %}
+
+{% block breadcrumb %}
+<ol class="breadcrumb breadcrumb-custom">
+    <li class="breadcrumb-item"><a href="{% url 'frontend:dashboard' %}">Dashboard</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Students</li>
+</ol>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Student List</h5>
+                {% if request.user.user_type != 'teacher' %}
+                <a href="{% url 'frontend:student_register' %}" class="btn btn-primary">
+                    <i class="bi bi-person-plus"></i> Register New Student
+                </a>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <!-- Search and Filters -->
+                <form method="GET" class="form-grid filter-form mb-4">
+                    <div>
+                        <input type="text" name="search" class="form-control" placeholder="Search by name or admission #" value="{{ request.GET.search }}">
+                    </div>
+                    <div>
+                        <select name="grade" class="form-select">
+                            <option value="">All Grades</option>
+                            {% for grade in grades %}
+                            <option value="{{ grade.id }}" {% if request.GET.grade == grade.id|stringformat:"s" %}selected{% endif %}>
+                                {{ grade.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <select name="class" class="form-select">
+                            <option value="">All Classes</option>
+                            {% for class in classes %}
+                            <option value="{{ class.id }}" {% if request.GET.class == class.id|stringformat:"s" %}selected{% endif %}>
+                                {{ class }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <select name="gender" class="form-select">
+                            <option value="">All Genders</option>
+                            <option value="M" {% if request.GET.gender == 'M' %}selected{% endif %}>Male</option>
+                            <option value="F" {% if request.GET.gender == 'F' %}selected{% endif %}>Female</option>
+                        </select>
+                    </div>
+                    <div class="full-width d-flex justify-content-end">
+                        <button type="submit" class="btn btn-outline-primary w-100">
+                            <i class="bi bi-search"></i> Search
+                        </button>
+                    </div>
+                </form>
+                
+                <!-- Results Summary -->
+                <div class="mb-3">
+                    <strong>{{ students.paginator.count }}</strong> student(s) found
+                </div>
+                
+                <!-- Student Table -->
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Admission #</th>
+                                <th>Name</th>
+                                <th>Grade</th>
+                                <th>Class</th>
+                                <th>Gender</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for student in students %}
+                            <tr>
+                                <td><strong>{{ student.admission_number }}</strong></td>
+                                <td>{{ student.get_full_name }}</td>
+                                <td>{{ student.current_class.grade.name|default:"-" }}</td>
+                                <td>{{ student.current_class|default:"-" }}</td>
+                                <td>{{ student.get_gender_display }}</td>
+                                <td>
+                                    {% if student.status == 'active' %}
+                                        <span class="badge bg-success">Active</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ student.get_status_display }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{% url 'frontend:student_detail' student.id %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="{% url 'frontend:student_edit' student.id %}" class="btn btn-sm btn-outline-secondary">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center text-muted py-4">No students found</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination -->
+                {% if students.has_other_pages %}
+                <nav>
+                    <ul class="pagination justify-content-center">
+                        {% if students.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ students.previous_page_number }}&{{ request.GET.urlencode }}">Previous</a>
+                        </li>
+                        {% endif %}
+                        
+                        {% for num in students.paginator.page_range %}
+                            {% if students.number == num %}
+                            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                            {% elif num > students.number|add:'-3' and num < students.number|add:'3' %}
+                            <li class="page-item"><a class="page-link" href="?page={{ num }}&{{ request.GET.urlencode }}">{{ num }}</a></li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if students.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ students.next_page_number }}&{{ request.GET.urlencode }}">Next</a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Actions -->
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Bulk Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    {% if request.user.user_type != 'teacher' %}
+                    <div class="col-md-4">
+                        <a href="{% url 'frontend:student_promote' %}" class="btn btn-outline-success w-100">
+                            <i class="bi bi-arrow-up-circle"></i> Promote Students
+                        </a>
+                    </div>
+                    {% endif %}
+                    <div class="col-md-4">
+                        {% if request.user.user_type != 'teacher' %}
+                        <a href="{% url 'frontend:invoice_generate' %}" class="btn btn-outline-primary w-100">
+                            <i class="bi bi-file-earmark-plus"></i> Generate Invoices
+                        </a>
+                        {% else %}
+                        <button class="btn btn-outline-primary w-100" disabled>
+                            <i class="bi bi-file-earmark-plus"></i> Generate Invoices
+                        </button>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4">
+                        {% if request.user.user_type != 'teacher' %}
+                        <a class="btn btn-outline-info w-100" href="{% url 'frontend:student_export' %}?{{ request.GET.urlencode }}">
+                            <i class="bi bi-download"></i> Export to Excel
+                        </a>
+                        {% else %}
+                        <button class="btn btn-outline-info w-100" disabled>
+                            <i class="bi bi-download"></i> Export to Excel
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ staff.user.get_full_name }} - Staff Details{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h2><i class="fas fa-id-card"></i> Staff Details</h2>
+        </div>
+        <div class="col-md-6 text-end">
+            <a href="{% url 'administration:staff_list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to List
+            </a>
+            <a href="{% url 'admin:administration_staff_change' staff.id %}" class="btn btn-warning">
+                <i class="fas fa-edit"></i> Edit
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Personal Information -->
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-body text-center">
+                    {% if staff.user.profile_picture %}
+                    <img src="{{ staff.user.profile_picture.url }}" class="rounded-circle mb-3" width="150" height="150">
+                    {% else %}
+                    <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center mb-3" style="width: 150px; height: 150px; font-size: 4rem;">
+                        {{ staff.user.first_name.0 }}{{ staff.user.last_name.0 }}
+                    </div>
+                    {% endif %}
+                    <h4>{{ staff.user.get_full_name }}</h4>
+                    <p class="text-muted">{{ staff.employee_id }}</p>
+                    <span class="badge bg-primary">{{ staff.get_staff_type_display }}</span>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-info-circle"></i> Personal Information</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <tr>
+                            <th>Position:</th>
+                            <td>{{ staff.position }}</td>
+                        </tr>
+                        <tr>
+                            <th>Department:</th>
+                            <td>{{ staff.department|default:"N/A" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Email:</th>
+                            <td>{{ staff.user.email }}</td>
+                        </tr>
+                        <tr>
+                            <th>Phone:</th>
+                            <td>{{ staff.user.phone_number }}</td>
+                        </tr>
+                        <tr>
+                            <th>Date of Birth:</th>
+                            <td>{{ staff.date_of_birth|date:"M d, Y" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Join Date:</th>
+                            <td>{{ staff.date_of_joining|date:"M d, Y" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Qualifications:</th>
+                            <td>{{ staff.qualifications|default:"N/A" }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Attendance Records -->
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-calendar-check"></i> Recent Attendance (Last 30 Days)</h5>
+                </div>
+                <div class="card-body">
+                    {% if attendance_records %}
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                    <th>Check In</th>
+                                    <th>Check Out</th>
+                                    <th>Remarks</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for record in attendance_records %}
+                                <tr>
+                                    <td>{{ record.date|date:"M d, Y (D)" }}</td>
+                                    <td>
+                                        {% if record.status == 'present' %}
+                                        <span class="badge bg-success">Present</span>
+                                        {% elif record.status == 'absent' %}
+                                        <span class="badge bg-danger">Absent</span>
+                                        {% elif record.status == 'late' %}
+                                        <span class="badge bg-warning">Late</span>
+                                        {% elif record.status == 'leave' %}
+                                        <span class="badge bg-info">On Leave</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ record.check_in_time|default:"N/A" }}</td>
+                                    <td>{{ record.check_out_time|default:"N/A" }}</td>
+                                    <td>{{ record.remarks|default:"-" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center">No attendance records available</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

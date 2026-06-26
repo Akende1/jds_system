@@ -1,0 +1,478 @@
+{% extends 'base_frontend.html' %}
+
+{% block title %}Manager Approvals Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <h1 class="mb-4">✅ Approvals & Requests Dashboard</h1>
+    
+    {% if messages %}
+        <div class="alert alert-info alert-dismissible fade show" role="alert">
+            {% for message in messages %}
+                <p>{{ message }}</p>
+            {% endfor %}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    {% endif %}
+    
+    <!-- Quick Stats -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card border-warning">
+                <div class="card-body">
+                    <h6 class="card-title">⏳ Pending Restocking Requests</h6>
+                    <h2 class="text-warning">{{ pending_requests_count }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-info">
+                <div class="card-body">
+                    <h6 class="card-title">📝 Pending Edit Requests</h6>
+                    <h2 class="text-info">{{ pending_edits_count }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-success">
+                <div class="card-body">
+                    <h6 class="card-title">✔️ Recently Approved</h6>
+                    <h2 class="text-success">{{ approved_requests.count }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-primary">
+                <div class="card-body">
+                    <h6 class="card-title">🔔 Pending Inbox</h6>
+                    <h2 class="text-primary">{{ unread_notifications_count }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Unified Approval Inbox</h5>
+            <span class="badge bg-primary">{{ notifications_count }} shown</span>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-2 mb-3">
+                <div class="col-md-4">
+                    <input type="text" name="notification_search" value="{{ notification_search }}" class="form-control" placeholder="Search title, message, or object type">
+                </div>
+                <div class="col-md-3">
+                    <select name="notification_type" class="form-select">
+                        <option value="all" {% if notification_type_filter == 'all' or not notification_type_filter %}selected{% endif %}>All Types</option>
+                        {% for value, label in notification_type_choices %}
+                            <option value="{{ value }}" {% if notification_type_filter == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select name="notification_status" class="form-select">
+                        <option value="all" {% if notification_status_filter == 'all' or not notification_status_filter %}selected{% endif %}>All Statuses</option>
+                        <option value="unread" {% if notification_status_filter == 'unread' %}selected{% endif %}>Unread</option>
+                        <option value="read" {% if notification_status_filter == 'read' %}selected{% endif %}>Read</option>
+                        <option value="archived" {% if notification_status_filter == 'archived' %}selected{% endif %}>Archived</option>
+                    </select>
+                </div>
+                <div class="col-md-2 d-grid">
+                    <button type="submit" class="btn btn-primary">Filter</button>
+                </div>
+            </form>
+
+            {% if notifications %}
+                {% for notification in notifications %}
+                    <div class="border rounded-3 p-3 mb-3 {% if notification.status == 'unread' %}bg-light{% endif %}">
+                        <div class="d-flex justify-content-between align-items-start gap-3">
+                            <div>
+                                <div class="fw-semibold">{{ notification.title }}</div>
+                                <div class="text-muted small">
+                                    {{ notification.get_notification_type_display }} · {{ notification.created_at|date:"M d, H:i" }}
+                                    {% if notification.content_type %} · {{ notification.content_type }}{% if notification.object_id %} #{{ notification.object_id }}{% endif %}{% endif %}
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                {% if notification.status == 'unread' %}
+                                    <span class="badge bg-warning text-dark">Unread</span>
+                                {% elif notification.status == 'read' %}
+                                    <span class="badge bg-success">Read</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Archived</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <p class="mb-2 mt-2">{{ notification.message }}</p>
+                        <div class="d-flex flex-wrap gap-2 align-items-center">
+                                {% if notification.status == 'unread' %}
+                                <form method="post" class="d-inline ajax-notification-action">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action_type" value="mark_notification_read">
+                                    <input type="hidden" name="notification_id" value="{{ notification.id }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary">Mark Read</button>
+                                </form>
+                            {% else %}
+                                <small class="text-muted">Read{% if notification.read_at %} at {{ notification.read_at|date:"M d, H:i" }}{% endif %}</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="alert alert-info mb-0">No notifications match the current filters.</div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Nav Tabs -->
+    <ul class="nav nav-tabs mb-4" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="restocking-tab" data-bs-toggle="tab" data-bs-target="#restocking" 
+                    type="button" role="tab" aria-controls="restocking" aria-selected="true">
+                📦 Restocking Requests
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="edits-tab" data-bs-toggle="tab" data-bs-target="#edits" 
+                    type="button" role="tab" aria-controls="edits" aria-selected="false">
+                📋 Student Data Edits
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="approvals-tab" data-bs-toggle="tab" data-bs-target="#approvals" 
+                    type="button" role="tab" aria-controls="approvals" aria-selected="false">
+                🧭 Unified Approvals
+            </button>
+        </li>
+    </ul>
+    
+    <!-- Tab Content -->
+    <div class="tab-content">
+        <div class="tab-pane fade" id="approvals" role="tabpanel" aria-labelledby="approvals-tab">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Unified Approval Queue ({{ pending_approval_requests_count }})</h5>
+                    <span class="badge bg-light text-dark">Generic workflow layer</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover table-sm mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Type</th>
+                                <th>Submitted By</th>
+                                <th>Status</th>
+                                <th>Created</th>
+                                <th>Remarks</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for approval in approval_requests %}
+                            <tr>
+                                <td>{{ approval.get_request_type_display }}</td>
+                                <td>{{ approval.requested_by.get_full_name }}</td>
+                                <td><span class="badge bg-{% if approval.status == 'pending' %}warning text-dark{% elif approval.status == 'approved' %}success{% else %}danger{% endif %}">{{ approval.get_status_display }}</span></td>
+                                <td>{{ approval.created_at|date:"M d, H:i" }}</td>
+                                <td>{{ approval.remarks|default:"-"|truncatewords:12 }}</td>
+                                <td>
+                                    {% if approval.status == 'pending' %}
+                                        <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#approveModal{{ approval.id }}" title="Approve">✓</button>
+                                        <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#rejectModal{{ approval.id }}" title="Reject">✕</button>
+                                    {% else %}
+                                        <span class="text-muted small">Processed</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">No unified approval requests yet.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <!-- RESTOCKING REQUESTS TAB -->
+        <div class="tab-pane fade show active" id="restocking" role="tabpanel" aria-labelledby="restocking-tab">
+            {% if pending_requests %}
+                <div class="card mb-4">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="mb-0">Pending Restocking Requests ({{ pending_requests_count }})</h5>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover table-sm mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Staff Member</th>
+                                    <th>Item</th>
+                                    <th>Qty</th>
+                                    <th>Estimated Cost</th>
+                                    <th>Reason</th>
+                                    <th>Submitted</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for req in pending_requests %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ req.staff.user.get_full_name }}</strong>
+                                            <br><small class="text-muted">{{ req.staff.staff_id }}</small>
+                                        </td>
+                                        <td>
+                                            <strong>{{ req.stock_item.name }}</strong>
+                                            <br><small class="text-muted">{{ req.stock_item.category }}</small>
+                                        </td>
+                                        <td>
+                                            {{ req.quantity_requested }} {{ req.stock_item.unit }}
+                                        </td>
+                                        <td>
+                                            <strong>K{{ req.estimated_cost }}</strong>
+                                        </td>
+                                        <td>
+                                            <small>{{ req.reason|truncatewords:10 }}</small>
+                                        </td>
+                                        <td>
+                                            <small>{{ req.created_at|date:"M d, H:i" }}</small>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm" role="group">
+                                                <button type="button" class="btn btn-success btn-sm" 
+                                                        data-bs-toggle="modal" data-bs-target="#approveModal{{ req.id }}">
+                                                    ✓ Approve
+                                                </button>
+                                                <button type="button" class="btn btn-danger btn-sm" 
+                                                        data-bs-toggle="modal" data-bs-target="#rejectModal{{ req.id }}">
+                                                    ✕ Reject
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    
+                                    <!-- Approve Modal -->
+                                    <div class="modal fade" id="approveModal{{ req.id }}" tabindex="-1">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <div class="modal-header bg-success text-white">
+                                                    <h5 class="modal-title">Approve Restocking Request</h5>
+                                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <form method="post" action="{% url 'frontend:approve_restocking' req.id %}">
+                                                    {% csrf_token %}
+                                                    <div class="modal-body">
+                                                        <p><strong>Item:</strong> {{ req.stock_item.name }}</p>
+                                                        <p><strong>Quantity:</strong> {{ req.quantity_requested }} {{ req.stock_item.unit }}</p>
+                                                        <p><strong>Est. Cost:</strong> K{{ req.estimated_cost }}</p>
+                                                        
+                                                        <div class="form-group">
+                                                            <label for="admin_notes{{ req.id }}" class="form-label">Notes (optional)</label>
+                                                            <textarea class="form-control" id="admin_notes{{ req.id }}" 
+                                                                      name="admin_notes" rows="3" placeholder="e.g., Approved via supplier quote..."></textarea>
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                        <button type="submit" class="btn btn-success">✓ Approve Request</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Reject Modal -->
+                                    <div class="modal fade" id="rejectModal{{ req.id }}" tabindex="-1">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <div class="modal-header bg-danger text-white">
+                                                    <h5 class="modal-title">Reject Restocking Request</h5>
+                                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <form method="post" action="{% url 'frontend:reject_restocking' req.id %}">
+                                                    {% csrf_token %}
+                                                    <div class="modal-body">
+                                                        <p><strong>Item:</strong> {{ req.stock_item.name }}</p>
+                                                        
+                                                        <div class="form-group">
+                                                            <label for="reject_notes{{ req.id }}" class="form-label">Reason for Rejection *</label>
+                                                            <textarea class="form-control" id="reject_notes{{ req.id }}" 
+                                                                      name="admin_notes" rows="3" placeholder="e.g., Budget constraints, alternative supplier found..." required></textarea>
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                        <button type="submit" class="btn btn-danger">✕ Reject Request</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            {% else %}
+                <div class="alert alert-success">
+                    <i class="bi bi-check-circle"></i> No pending restocking requests at this time.
+                </div>
+            {% endif %}
+            
+            {% if approved_requests %}
+                <div class="card">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">Recently Approved Requests</h5>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Staff</th>
+                                    <th>Item</th>
+                                    <th>Qty</th>
+                                    <th>Cost</th>
+                                    <th>Approved By</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for req in approved_requests %}
+                                    <tr>
+                                        <td>{{ req.staff.user.first_name }} {{ req.staff.user.last_name }}</td>
+                                        <td>{{ req.stock_item.name }}</td>
+                                        <td>{{ req.quantity_requested }} {{ req.stock_item.unit }}</td>
+                                        <td>K{{ req.estimated_cost }}</td>
+                                        <td>{{ req.reviewed_by.first_name }} {{ req.reviewed_by.last_name }}</td>
+                                        <td><small>{{ req.reviewed_at|date:"M d, H:i" }}</small></td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+        
+        <!-- STUDENT DATA EDITS TAB -->
+        <div class="tab-pane fade" id="edits" role="tabpanel" aria-labelledby="edits-tab">
+            {% if pending_edits %}
+                <div class="card">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0">Pending Edit Requests ({{ pending_edits_count }})</h5>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover table-sm mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Student</th>
+                                    <th>Field</th>
+                                    <th>Current Value</th>
+                                    <th>Requested Value</th>
+                                    <th>Parent</th>
+                                    <th>Requested</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for req in pending_edits %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ req.student.user.get_full_name }}</strong>
+                                            <br><small class="text-muted">{{ req.student.admission_number }}</small>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-secondary">{{ req.field_name }}</span>
+                                        </td>
+                                        <td>
+                                            <code>{{ req.current_value }}</code>
+                                        </td>
+                                        <td>
+                                            <code class="text-success">{{ req.requested_value }}</code>
+                                        </td>
+                                        <td>{{ req.parent.get_full_name }}</td>
+                                        <td>
+                                            <small>{{ req.created_at|date:"M d" }}</small>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm" role="group">
+                                                <a href="{% url 'frontend:student_detail' req.student.id %}" 
+                                                   class="btn btn-info btn-sm">View</a>
+                                                <a href="/admin/administration/editrequest/{{ req.id }}/change/" 
+                                                   class="btn btn-warning btn-sm" target="_blank">Edit in Admin</a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> No pending edit requests at this time.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modals for Approval Actions -->
+{% for approval in approval_requests %}
+    {% if approval.status == 'pending' %}
+    <!-- Approve Modal -->
+    <div class="modal fade" id="approveModal{{ approval.id }}" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">Approve Request</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="post" action="{% url 'frontend:approve_approval' approval.id %}">
+                    {% csrf_token %}
+                    <div class="modal-body">
+                        <p><strong>Request Type:</strong> {{ approval.get_request_type_display }}</p>
+                        <p><strong>From:</strong> {{ approval.requested_by.get_full_name }}</p>
+                        <div class="mb-3">
+                            <label for="remarks{{ approval.id }}" class="form-label">Approval Notes (Optional)</label>
+                            <textarea name="remarks" id="remarks{{ approval.id }}" class="form-control" rows="3" placeholder="Add notes for your approval..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success">✓ Approve</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Reject Modal -->
+    <div class="modal fade" id="rejectModal{{ approval.id }}" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">Reject Request</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="post" action="{% url 'frontend:reject_approval' approval.id %}">
+                    {% csrf_token %}
+                    <div class="modal-body">
+                        <p><strong>Request Type:</strong> {{ approval.get_request_type_display }}</p>
+                        <p><strong>From:</strong> {{ approval.requested_by.get_full_name }}</p>
+                        <div class="mb-3">
+                            <label for="reject_remarks{{ approval.id }}" class="form-label">Reason for Rejection <span class="text-danger">*</span></label>
+                            <textarea name="remarks" id="reject_remarks{{ approval.id }}" class="form-control" rows="3" placeholder="Please explain why this request is being rejected..." required></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-danger">✕ Reject</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+{% endfor %}
+
+{% endblock %}

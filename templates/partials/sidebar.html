@@ -1,0 +1,220 @@
+<!-- Shared sidebar partial used by frontend base templates -->
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <h4>JDS Management</h4>
+        <div class="user-role">
+            <i class="bi bi-person-circle"></i>
+            {{ request.user.get_full_name|default:request.user.username }}
+            <br>
+            <small>{{ request.user.get_user_type_display }}</small>
+        </div>
+    </div>
+    
+    <nav class="sidebar-menu">
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="{% url 'frontend:dashboard' %}">
+                    <i class="bi bi-speedometer2"></i>
+                    Dashboard
+                </a>
+            </li>
+
+            {% if request.user.is_superuser or request.user.user_type == 'manager' or request.user.user_type == 'admin' or request.user.user_type == 'head_teacher' or request.user.user_type == 'teacher' %}
+            <li class="nav-item nav-group">
+                <button class="nav-link group-toggle btn btn-link text-start p-0" type="button" data-bs-toggle="collapse" data-bs-target="#academicGroup" aria-expanded="true">
+                    <span><i class="bi bi-book"></i> Academics</span>
+                    <i class="bi bi-chevron-down"></i>
+                </button>
+                <div class="collapse show nav-submenu" id="academicGroup">
+                    <a class="nav-link {% if 'academics/exams' in request.path %}active{% endif %}" href="{% url 'frontend:exam_list' %}">Exams</a>
+                    <a class="nav-link {% if 'academics/results' in request.path %}active{% endif %}" href="{% url 'frontend:result_list' %}">Results</a>
+                    <a class="nav-link {% if 'attendance' in request.path %}active{% endif %}" href="{% url 'frontend:attendance_list' %}">Attendance</a>
+                    <a class="nav-link {% if 'academics/timetable' in request.path or 'timetable' in request.path %}active{% endif %}" href="{% url 'frontend:timetable' %}">Timetable</a>
+                    <a class="nav-link {% if 'academics/calendar' in request.path or 'calendar' in request.path %}active{% endif %}" href="{% url 'frontend:calendar' %}">Calendar</a>
+                </div>
+            </li>
+
+            <li class="nav-item nav-group">
+                <button class="nav-link group-toggle btn btn-link text-start p-0" type="button" data-bs-toggle="collapse" data-bs-target="#studentGroup" aria-expanded="true">
+                    <span><i class="bi bi-people"></i> Students</span>
+                    <i class="bi bi-chevron-down"></i>
+                </button>
+                <div class="collapse show nav-submenu" id="studentGroup">
+                    <a class="nav-link {% if 'students/' == request.path|slice:':10' %}active{% endif %}" href="{% url 'frontend:student_list' %}">All Students</a>
+                    {% if request.user.user_type == 'teacher' %}
+                    <a class="nav-link {% if 'students/transfer' in request.path %}active{% endif %}" href="{% url 'frontend:student_transfer' %}">Request Transfer</a>
+                    {% else %}
+                    <a class="nav-link {% if 'students/register' in request.path %}active{% endif %}" href="{% url 'frontend:student_register' %}">Add Student</a>
+                    <a class="nav-link {% if 'students/promote' in request.path %}active{% endif %}" href="{% url 'frontend:student_promote' %}">Promotions</a>
+                    <a class="nav-link {% if 'students/transfer' in request.path %}active{% endif %}" href="{% url 'frontend:student_transfer' %}">Transfers</a>
+                    {% endif %}
+                </div>
+            </li>
+            {% endif %}
+
+            {% if request.user.is_superuser or request.user.user_type == 'manager' or request.user.user_type == 'admin' %}
+            <li class="nav-item nav-group">
+                <button class="nav-link group-toggle btn btn-link text-start p-0" type="button" data-bs-toggle="collapse" data-bs-target="#financeGroup" aria-expanded="true">
+                    <span><i class="bi bi-currency-dollar"></i> Finance</span>
+                    <i class="bi bi-chevron-down"></i>
+                </button>
+                <div class="collapse show nav-submenu" id="financeGroup">
+                    <!-- Student Finance Section -->
+                    <div class="nav-section-label">Student Finance</div>
+                    <a class="nav-link {% if 'finance/invoices' in request.path %}active{% endif %}" href="{% url 'frontend:invoice_list' %}">Invoices</a>
+                    <a class="nav-link {% if 'finance/payments' in request.path %}active{% endif %}" href="{% url 'frontend:payment_list' %}">Payments</a>
+                    <a class="nav-link {% if 'finance/fee-structures' in request.path %}active{% endif %}" href="{% url 'frontend:fee_structure_list' %}">Fee Structures</a>
+                    <a class="nav-link {% if 'finance/accounts' in request.path %}active{% endif %}" href="{% url 'frontend:accounts_list' %}">Accounts</a>
+                    
+                    <!-- Company Finance Section -->
+                    <div class="nav-section-label">Company Finance</div>
+                    <a class="nav-link {% if 'financial' in request.path %}active{% endif %}" href="{% url 'frontend:financial_overview' %}">Financial Overview</a>
+                    <a class="nav-link {% if 'financial/income' in request.path %}active{% endif %}" href="{% url 'frontend:income_list' %}">Income</a>
+                    <a class="nav-link {% if 'financial/expenses' in request.path %}active{% endif %}" href="{% url 'frontend:expense_list' %}">Expenses</a>
+                    <a class="nav-link {% if 'financial/salaries' in request.path %}active{% endif %}" href="{% url 'frontend:salary_list' %}">Salaries</a>
+                    <a class="nav-link {% if 'financial/reports' in request.path %}active{% endif %}" href="{% url 'frontend:financial_reports' %}">Reports</a>
+                    <a class="nav-link {% if 'finance/inventory' in request.path %}active{% endif %}" href="{% url 'frontend:inventory_dashboard' %}">Inventory</a>
+                </div>
+            </li>
+
+            <li class="nav-item nav-group">
+                <button class="nav-link group-toggle btn btn-link text-start p-0" type="button" data-bs-toggle="collapse" data-bs-target="#staffGroup" aria-expanded="true">
+                    <span><i class="bi bi-person-badge"></i> Employees</span>
+                    <i class="bi bi-chevron-down"></i>
+                </button>
+                <div class="collapse show nav-submenu" id="staffGroup">
+                    <a class="nav-link {% if 'staff/' in request.path %}active{% endif %}" href="{% url 'frontend:staff_list' %}">All Staff</a>
+                    <a class="nav-link {% if 'staff/add' in request.path %}active{% endif %}" href="{% url 'frontend:staff_add' %}">Add Staff</a>
+                    <a class="nav-link {% if 'analytics' in request.path %}active{% endif %}" href="{% url 'frontend:analytics_dashboard' %}">Analytics</a>
+                </div>
+            </li>
+
+            <li class="nav-item nav-group">
+                <button class="nav-link group-toggle btn btn-link text-start p-0" type="button" data-bs-toggle="collapse" data-bs-target="#operationsGroup" aria-expanded="true">
+                    <span><i class="bi bi-gear"></i> Operations</span>
+                    <i class="bi bi-chevron-down"></i>
+                </button>
+                <div class="collapse show nav-submenu" id="operationsGroup">
+                    <a class="nav-link" href="{% url 'frontend:analytics_dashboard' %}">Analytics</a>
+                    <a class="nav-link {% if 'sync' in request.path %}active{% endif %}" href="{% url 'frontend:sync_dashboard' %}">Sync</a>
+                    <a class="nav-link" href="#" onclick="return false;">Sync Management</a>
+                </div>
+            </li>
+            {% endif %}
+
+            {% if request.user.is_superuser or request.user.user_type == 'manager' or request.user.user_type == 'admin' or request.user.user_type == 'head_teacher' %}
+            <li class="nav-item nav-group">
+                <button class="nav-link group-toggle btn btn-link text-start p-0" type="button" data-bs-toggle="collapse" data-bs-target="#communicationGroup" aria-expanded="true">
+                    <span><i class="bi bi-megaphone"></i> Communication</span>
+                    <i class="bi bi-chevron-down"></i>
+                </button>
+                <div class="collapse show nav-submenu" id="communicationGroup">
+                    <a class="nav-link {% if 'communication/announcements' in request.path %}active{% endif %}" href="{% url 'communication:announcement_list' %}">Announcements</a>
+                    <a class="nav-link {% if 'communication/messages' in request.path %}active{% endif %}" href="{% url 'communication:message_list' %}">Messages</a>
+                    <a class="nav-link {% if 'communication/reminders' in request.path %}active{% endif %}" href="{% url 'communication:reminder_list' %}">Reminders</a>
+                    <a class="nav-link {% if 'communication/newsletters' in request.path %}active{% endif %}" href="{% url 'communication:newsletter_list' %}">Newsletters</a>
+                </div>
+            </li>
+            {% endif %}
+
+            {% if request.user.is_superuser or request.user.user_type == 'manager' or request.user.user_type == 'admin' %}
+            <li class="nav-item">
+                <a class="nav-link {% if 'manager/approvals' in request.path %}active{% endif %}" href="{% url 'frontend:manager_approvals' %}" style="background-color: #e7f3ff; border-left: 4px solid #0d6efd; font-weight: 600;">
+                    <i class="bi bi-check-circle"></i>
+                    Approvals
+                    {% if pending_notifications_count %}
+                    <span class="badge bg-danger rounded-pill ms-2">{{ pending_notifications_count }}</span>
+                    {% endif %}
+                </a>
+            </li>
+            {% endif %}
+
+            {% if request.user.user_type == 'teacher' %}
+            <li class="nav-item nav-group">
+                <button class="nav-link group-toggle btn btn-link text-start p-0" type="button" data-bs-toggle="collapse" data-bs-target="#teacherCommunicationGroup" aria-expanded="true">
+                    <span><i class="bi bi-chat-dots"></i> Communication</span>
+                    <i class="bi bi-chevron-down"></i>
+                </button>
+                <div class="collapse show nav-submenu" id="teacherCommunicationGroup">
+                    <a class="nav-link {% if 'communication/teacher' in request.path %}active{% endif %}" href="{% url 'frontend:teacher_communication_hub' %}">Parent Communication</a>
+                    <a class="nav-link {% if 'communication/teacher' in request.path %}active{% endif %}" href="{% url 'frontend:teacher_communication_hub' %}#appointments">Schedule Appointment</a>
+                    <a class="nav-link {% if 'notifications' in request.path %}active{% endif %}" href="{% url 'frontend:notifications' %}">Notifications</a>
+                    <a class="nav-link {% if 'stationery-request' in request.path or 'restocking' in request.path %}active{% endif %}" href="{% url 'frontend:stationery_request' %}">Stationery Request</a>
+                </div>
+            </li>
+            {% endif %}
+            
+            {% if request.user.user_type == 'auxiliary' %}
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="bi bi-egg-fried"></i>
+                    Lunch Management
+                </a>
+            </li>
+            
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="bi bi-bus-front"></i>
+                    Transport
+                </a>
+            </li>
+            {% endif %}
+            
+            {% if request.user.user_type == 'parent' %}
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="bi bi-person"></i>
+                    My Children
+                </a>
+            </li>
+            
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="bi bi-receipt"></i>
+                    Fees & Payments
+                </a>
+            </li>
+            
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="bi bi-envelope"></i>
+                    Messages
+                </a>
+            </li>
+            {% endif %}
+            
+            {% if request.user.user_type == 'student' %}
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="bi bi-journal-text"></i>
+                    My Assignments
+                </a>
+            </li>
+            
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="bi bi-trophy"></i>
+                    My Results
+                </a>
+            </li>
+            
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="bi bi-calendar3"></i>
+                    My Timetable
+                </a>
+            </li>
+            {% endif %}
+            
+            <li class="nav-item mt-3">
+                <form method="POST" action="{% url 'logout' %}" style="margin: 0;">
+                    {% csrf_token %}
+                    <button type="submit" class="nav-link" style="background: none; border: none; width: 100%; text-align: left; cursor: pointer;">
+                        <i class="bi bi-box-arrow-right"></i>
+                        Logout
+                    </button>
+                </form>
+            </li>
+        </ul>
+    </nav>
+</aside>

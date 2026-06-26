@@ -1,0 +1,56 @@
+{% extends "emails/base_email.html" %}
+
+{% block content %}
+<div class="header">
+    <h1>Fee Payment Reminder</h1>
+</div>
+
+<div class="content">
+    <p>Dear {{ recipient_name }},</p>
+
+    <p>The school records show an outstanding fee balance for the following child or children in your care:</p>
+
+    <table class="info-table">
+        <tr>
+            <td>Total Outstanding:</td>
+            <td><strong>₦{{ total_balance|floatformat:2 }}</strong></td>
+        </tr>
+        <tr>
+            <td>Earliest Due Date:</td>
+            <td>{{ earliest_due_date|date:"F d, Y" }}</td>
+        </tr>
+        <tr>
+            <td>Reminder Type:</td>
+            <td>{{ reminder_type|title }}</td>
+        </tr>
+    </table>
+
+    <table class="info-table">
+        <tr>
+            <td>Child</td>
+            <td>Outstanding</td>
+        </tr>
+        {% for child in children %}
+        <tr>
+            <td>
+                <strong>{{ child.student_name }}</strong><br>
+                <small>{{ child.admission_number }}{% if child.class_name %} - {{ child.class_name }}{% endif %}</small><br>
+                <small>Invoice: {{ child.invoice_number }}</small>
+            </td>
+            <td><strong>₦{{ child.balance|floatformat:2 }}</strong></td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <div class="amount">
+        Total Due: ₦{{ total_balance|floatformat:2 }}
+    </div>
+
+    <p>Please arrange payment before the due date to avoid penalties or disruption to school services.</p>
+
+    <p>If you have already made a payment, please disregard this reminder.</p>
+
+    <p>Regards,<br>
+    <strong>School Finance Department</strong></p>
+</div>
+{% endblock %}

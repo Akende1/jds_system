@@ -1,0 +1,117 @@
+{% extends 'base_frontend.html' %}
+
+{% block title %}Transfer Student - School Management System{% endblock %}
+
+{% block page_title %}Transfer Student{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="form-card form-card-narrow">
+                <h5 class="mb-3">Transfer Student to Another Class</h5>
+                <form method="POST" class="form-grid">
+                    {% csrf_token %}
+                    
+                    {% if student %}
+                    <!-- Single Student Transfer -->
+                    <div class="alert alert-info mb-4 full-width">
+                        <strong>Student:</strong> {{ student.get_full_name }} ({{ student.admission_number }})<br>
+                        <strong>Current Grade:</strong> {{ student.grade.name }}<br>
+                        <strong>Current Class:</strong> {{ student.current_class.name|default:"Not Assigned" }}
+                    </div>
+                    
+                    <div class="full-width row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Target Class *</label>
+                            <select name="target_class" class="form-select" required>
+                                <option value="">Select New Class</option>
+                                {% for class in available_classes %}
+                                <option value="{{ class.id }}">{{ class.name }} ({{ class.grade.name }})</option>
+                                {% endfor %}
+                            </select>
+                            <small class="text-muted">Classes shown are within the same grade or adjacent grades</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Effective Date *</label>
+                            <input type="date" name="effective_date" class="form-control" value="{{ today|date:'Y-m-d' }}" required>
+                        </div>
+                    </div>
+                    
+                    {% else %}
+                    <!-- Bulk Transfer -->
+                    <div class="full-width row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Select Student *</label>
+                            <select name="student_id" class="form-select" required id="studentSelect">
+                                <option value="">Choose Student to Transfer</option>
+                                {% for s in students %}
+                                <option value="{{ s.id }}" data-grade="{{ s.grade.name }}" data-class="{{ s.current_class.name|default:'Not Assigned' }}">
+                                    {{ s.admission_number }} - {{ s.get_full_name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <div id="currentInfo" class="alert alert-light" style="display:none;">
+                                <small>
+                                    <strong>Grade:</strong> <span id="currentGrade">-</span><br>
+                                    <strong>Class:</strong> <span id="currentClass">-</span>
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="full-width row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Target Class *</label>
+                            <select name="target_class" class="form-select" required>
+                                <option value="">Select New Class</option>
+                                {% for class in classes %}
+                                <option value="{{ class.id }}">{{ class.name }} ({{ class.grade.name }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Effective Date *</label>
+                            <input type="date" name="effective_date" class="form-control" value="{{ today|date:'Y-m-d' }}" required>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="full-width mb-3">
+                        <label class="form-label">Reason for Transfer</label>
+                        <textarea name="reason" class="form-control" rows="3" placeholder="Optional: Explain why this transfer is happening"></textarea>
+                    </div>
+                    
+                    <div class="alert alert-warning full-width">
+                        <i class="bi bi-info-circle"></i> <strong>Note:</strong> The student will be moved to the new class immediately on the effective date. Historical class records will be preserved.
+                    </div>
+                    
+                    <div class="full-width d-grid gap-2">
+                        <button type="submit" class="btn btn-warning btn-lg">
+                            <i class="bi bi-arrow-left-right"></i> Transfer Student
+                        </button>
+                        <a href="{% if student %}{% url 'frontend:student_detail' student.id %}{% else %}{% url 'frontend:student_list' %}{% endif %}" class="btn btn-outline-secondary">
+                            Cancel
+                        </a>
+                    </div>
+                </form>
+        </div>
+    </div>
+</div>
+
+{% if not student %}
+<script>
+document.getElementById('studentSelect')?.addEventListener('change', function() {
+    const option = this.options[this.selectedIndex];
+    if (option.value) {
+        document.getElementById('currentInfo').style.display = 'block';
+        document.getElementById('currentGrade').textContent = option.dataset.grade;
+        document.getElementById('currentClass').textContent = option.dataset.class;
+    } else {
+        document.getElementById('currentInfo').style.display = 'none';
+    }
+});
+</script>
+{% endif %}
+{% endblock %}

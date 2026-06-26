@@ -1,0 +1,147 @@
+{% extends 'base_frontend.html' %}
+
+{% block title %}{% if is_teacher_request %}Request Stationery{% else %}Request Supplies{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-7">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">📦 {% if is_teacher_request %}Submit Stationery Request{% else %}Submit Supply Request{% endif %}</h4>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="stock_item" class="form-label">{% if is_teacher_request %}Stationery Item{% else %}Stock Item{% endif %} *</label>
+                            <select class="form-control" id="stock_item" name="stock_item" required>
+                                <option value="">-- Select an item --</option>
+                                {% for item in stock_items %}
+                                    <option value="{{ item.id }}" data-unit="{{ item.unit }}" data-cost="{{ item.unit_cost }}">
+                                        {{ item.name }} ({{ item.category }}) - {{ item.current_quantity }} {{ item.unit }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <small class="form-text text-muted">{% if is_teacher_request %}Choose chalk, books, pens, and other classroom stationery.{% else %}Choose the item you need for school operations.{% endif %}</small>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="quantity" class="form-label">Quantity Needed *</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="quantity" name="quantity" 
+                                           step="0.01" min="0.01" required placeholder="0.00">
+                                    <span class="input-group-text" id="unit_display">units</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="estimated_cost" class="form-label">Est. Cost</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">K</span>
+                                    <input type="text" class="form-control" id="estimated_cost" 
+                                           readonly placeholder="0.00">
+                                </div>
+                                <small class="form-text text-muted">Automatically calculated</small>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="reason" class="form-label">Reason for Request *</label>
+                            <textarea class="form-control" id="reason" name="reason" rows="4" 
+                                      placeholder="Explain why restocking is needed..." required></textarea>
+                            <small class="form-text text-muted">e.g., 'Classroom stationery running low', 'Low kitchen stock for next week', etc.</small>
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <strong>ℹ️ Note:</strong> Your request will be reviewed by the Manager/Admin. 
+                            Once approved, the item will be purchased and stock updated.
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{% url 'frontend:dashboard' %}" class="btn btn-secondary">
+                                Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> Submit Request
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="card mt-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">{% if is_teacher_request %}Current Stationery List{% else %}Current Stock Levels{% endif %}</h5>
+                </div>
+                <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                    <div class="list-group list-group-flush">
+                        {% for item in stock_items %}
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">{{ item.name }}</h6>
+                                    <small class="text-muted">{{ item.category }}</small>
+                                </div>
+                                <div class="text-end">
+                                    {% if item.current_quantity <= item.minimum_threshold %}
+                                        <span class="badge bg-danger">{{ item.current_quantity }} {{ item.unit }}</span>
+                                    {% else %}
+                                        <span class="badge bg-success">{{ item.current_quantity }} {{ item.unit }}</span>
+                                    {% endif %}
+                                    <br>
+                                    <small class="text-muted">Min: {{ item.minimum_threshold }} {{ item.unit }}</small>
+                                </div>
+                            </div>
+                        {% empty %}
+                            <p class="text-muted">No stock items available.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('stock_item').addEventListener('change', function() {
+    const option = this.options[this.selectedIndex];
+    const unit = option.dataset.unit || 'units';
+    const cost = parseFloat(option.dataset.cost) || 0;
+    
+    document.getElementById('unit_display').textContent = unit;
+    
+    // Update estimated cost when quantity changes
+    updateEstimatedCost();
+});
+
+document.getElementById('quantity').addEventListener('input', function() {
+    updateEstimatedCost();
+});
+
+function updateEstimatedCost() {
+    const quantity = parseFloat(document.getElementById('quantity').value) || 0;
+    const option = document.getElementById('stock_item').options[document.getElementById('stock_item').selectedIndex];
+    const unitCost = parseFloat(option.dataset.cost) || 0;
+    const estimatedCost = quantity * unitCost;
+    
+    document.getElementById('estimated_cost').value = estimatedCost.toFixed(2);
+}
+</script>
+
+<style>
+    .input-group-text {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+    }
+</style>
+{% endblock %}

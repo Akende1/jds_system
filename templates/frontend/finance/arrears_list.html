@@ -1,0 +1,333 @@
+{% extends 'base_frontend.html' %}
+
+{% block title %}Fee Arrears - School Management System{% endblock %}
+
+{% block page_title %}Fee Arrears Management{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col-md-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <button class="btn btn-outline-danger" id="sendRemindersBtn">
+                    <i class="bi bi-envelope"></i> Send Payment Reminders
+                </button>
+                <button class="btn btn-outline-secondary" id="exportBtn">
+                    <i class="bi bi-file-excel"></i> Export Report
+                </button>
+            </div>
+            <div>
+                <button class="btn btn-outline-secondary" data-bs-toggle="collapse" data-bs-target="#filterPanel">
+                    <i class="bi bi-funnel"></i> Filters
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center border-danger">
+            <div class="card-body">
+                <h6 class="text-muted mb-2">Total Arrears</h6>
+                <h3 class="mb-0 text-danger">K {{ summary.total_arrears|floatformat:2|default:"0.00" }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h6 class="text-muted mb-2">Students in Arrears</h6>
+                <h3 class="mb-0">{{ summary.students_count|default:0 }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center border-warning">
+            <div class="card-body">
+                <h6 class="text-muted mb-2">30-60 Days Overdue</h6>
+                <h3 class="mb-0 text-warning">K {{ summary.arrears_30_60|floatformat:2|default:"0.00" }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center border-danger">
+            <div class="card-body">
+                <h6 class="text-muted mb-2">90+ Days Overdue</h6>
+                <h3 class="mb-0 text-danger">K {{ summary.arrears_90_plus|floatformat:2|default:"0.00" }}</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Panel -->
+<div class="collapse mb-3" id="filterPanel">
+    <div class="form-card">
+            <form method="GET" class="form-grid filter-form">
+                <div>
+                    <label class="form-label">Grade</label>
+                    <select name="grade" class="form-select">
+                        <option value="">All Grades</option>
+                        {% for grade in grades %}
+                        <option value="{{ grade.id }}" {% if request.GET.grade == grade.id|stringformat:'s' %}selected{% endif %}>{{ grade.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label">Aging Period</label>
+                    <select name="aging" class="form-select">
+                        <option value="">All Periods</option>
+                        <option value="30" {% if request.GET.aging == '30' %}selected{% endif %}>0-30 Days</option>
+                        <option value="60" {% if request.GET.aging == '60' %}selected{% endif %}>30-60 Days</option>
+                        <option value="90" {% if request.GET.aging == '90' %}selected{% endif %}>60-90 Days</option>
+                        <option value="90_plus" {% if request.GET.aging == '90_plus' %}selected{% endif %}>90+ Days</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label">Minimum Amount</label>
+                    <input type="number" name="min_amount" class="form-control" step="0.01" placeholder="0.00" value="{{ request.GET.min_amount }}">
+                </div>
+                <div class="d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
+                </div>
+            </form>
+    </div>
+</div>
+
+<!-- Search Bar -->
+<div class="form-card mb-3">
+        <form method="GET" class="form-grid filter-form filter-search-form">
+            <div class="input-group full-width">
+                <input type="text" name="search" class="form-control" placeholder="Search by student name or admission number..." value="{{ request.GET.search }}">
+                <button class="btn btn-outline-secondary" type="submit">
+                    <i class="bi bi-search"></i> Search
+                </button>
+            </div>
+        </form>
+</div>
+
+<!-- Arrears Table -->
+<div class="card">
+    <div class="card-body">
+        <form method="POST" action="{% url 'frontend:send_reminders' %}" id="arrearsReminderForm">
+            {% csrf_token %}
+            <input type="hidden" name="type" value="soft">
+            <input type="hidden" name="send_email" value="on">
+            <input type="hidden" name="send_sms" value="on">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th width="40">
+                            <input type="checkbox" id="selectAll" class="form-check-input">
+                        </th>
+                        <th>Admission No</th>
+                        <th>Student Name</th>
+                        <th>Grade</th>
+                        <th>Parent/Contact</th>
+                        <th class="text-end">0-30 Days</th>
+                        <th class="text-end">30-60 Days</th>
+                        <th class="text-end">60-90 Days</th>
+                        <th class="text-end">90+ Days</th>
+                        <th class="text-end">Total Arrears</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for arrear in arrears %}
+                    <tr>
+                        <td>
+                            <input type="checkbox" name="selected_students" value="{{ arrear.student.id }}" class="form-check-input">
+                        </td>
+                        <td><strong>{{ arrear.student.admission_number }}</strong></td>
+                        <td>
+                            <a href="{% url 'frontend:student_detail' arrear.student.id %}">
+                                {{ arrear.student.get_full_name }}
+                            </a>
+                        </td>
+                        <td>{{ arrear.student.grade.name }}</td>
+                        <td>
+                            {% if arrear.student.parent %}
+                                {{ arrear.student.parent.get_full_name }}<br>
+                                <small class="text-muted">{{ arrear.student.emergency_contact|default:"-" }}</small>
+                            {% else %}
+                                <small class="text-muted">{{ arrear.student.emergency_contact|default:"No contact" }}</small>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            {% if arrear.days_0_30 > 0 %}
+                                <span class="text-warning">K {{ arrear.days_0_30|floatformat:2 }}</span>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            {% if arrear.days_30_60 > 0 %}
+                                <span class="text-warning">K {{ arrear.days_30_60|floatformat:2 }}</span>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            {% if arrear.days_60_90 > 0 %}
+                                <span class="text-danger">K {{ arrear.days_60_90|floatformat:2 }}</span>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            {% if arrear.days_90_plus > 0 %}
+                                <span class="text-danger fw-bold">K {{ arrear.days_90_plus|floatformat:2 }}</span>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            <strong class="text-danger">K {{ arrear.total_arrears|floatformat:2 }}</strong>
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'frontend:student_account' arrear.student.id %}" class="btn btn-outline-primary" title="View Statement">
+                                    <i class="bi bi-file-text"></i>
+                                </a>
+                                <a href="{% url 'frontend:payment_record' %}?student={{ arrear.student.id }}" class="btn btn-outline-success" title="Record Payment">
+                                    <i class="bi bi-cash"></i>
+                                </a>
+                                <button class="btn btn-outline-danger send-reminder" data-student-id="{{ arrear.student.id }}" title="Send Reminder">
+                                    <i class="bi bi-envelope"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="11" class="text-center text-muted py-4">
+                            <i class="bi bi-check-circle" style="font-size: 2rem; color: green;"></i><br>
+                            No students with arrears found
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                {% if arrears %}
+                <tfoot class="table-light">
+                    <tr>
+                        <th colspan="5" class="text-end">Totals:</th>
+                        <th class="text-end">K {{ summary.arrears_0_30|floatformat:2|default:"0.00" }}</th>
+                        <th class="text-end">K {{ summary.arrears_30_60|floatformat:2|default:"0.00" }}</th>
+                        <th class="text-end">K {{ summary.arrears_60_90|floatformat:2|default:"0.00" }}</th>
+                        <th class="text-end">K {{ summary.arrears_90_plus|floatformat:2|default:"0.00" }}</th>
+                        <th class="text-end text-danger"><strong>K {{ summary.total_arrears|floatformat:2 }}</strong></th>
+                        <th></th>
+                    </tr>
+                </tfoot>
+                {% endif %}
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        {% if arrears.has_other_pages %}
+        <nav class="mt-3">
+            <ul class="pagination justify-content-center">
+                {% if arrears.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ arrears.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">Previous</a>
+                </li>
+                {% endif %}
+                
+                <li class="page-item disabled">
+                    <span class="page-link">Page {{ arrears.number }} of {{ arrears.paginator.num_pages }}</span>
+                </li>
+                
+                {% if arrears.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ arrears.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">Next</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+        </form>
+    </div>
+</div>
+
+<!-- Bulk Actions Panel -->
+{% if arrears %}
+<div class="card mt-3">
+    <div class="card-body">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <strong>Selected:</strong> <span id="selectedCount">0</span> student(s)
+            </div>
+            <div class="col-md-6 text-end">
+                <button class="btn btn-danger" id="sendBulkReminders" type="button" disabled>
+                    <i class="bi bi-envelope"></i> Send Reminders to Selected
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<script>
+// Select all functionality
+document.getElementById('selectAll')?.addEventListener('change', function() {
+    document.querySelectorAll('input[name="selected_students"]').forEach(cb => {
+        cb.checked = this.checked;
+    });
+    updateSelectedCount();
+});
+
+// Update selected count
+function updateSelectedCount() {
+    const count = document.querySelectorAll('input[name="selected_students"]:checked').length;
+    document.getElementById('selectedCount').textContent = count;
+    document.getElementById('sendBulkReminders').disabled = count === 0;
+}
+
+document.querySelectorAll('input[name="selected_students"]').forEach(cb => {
+    cb.addEventListener('change', updateSelectedCount);
+});
+
+// Individual reminder (placeholder)
+document.querySelectorAll('.send-reminder').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const studentId = this.dataset.studentId;
+        if (confirm('Send payment reminder to this student\'s parent/guardian?')) {
+            const form = document.getElementById('arrearsReminderForm');
+            const existing = form.querySelector(`input[name="students"][value="${studentId}"]`);
+            if (!existing) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'students';
+                input.value = studentId;
+                form.appendChild(input);
+            }
+            form.submit();
+        }
+    });
+});
+
+// Bulk reminders (placeholder)
+document.getElementById('sendBulkReminders')?.addEventListener('click', function() {
+    const button = this;
+    const selectedIds = Array.from(document.querySelectorAll('input[name="selected_students"]:checked'))
+        .map(cb => cb.value);
+
+    const form = document.getElementById('arrearsReminderForm');
+    form.querySelectorAll('input[name="students"]').forEach(input => input.remove());
+
+    selectedIds.forEach(studentId => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'students';
+        input.value = studentId;
+        form.appendChild(input);
+    });
+
+    if (selectedIds.length > 0 && confirm(`Send payment reminders to ${selectedIds.length} students?`)) {
+        form.submit();
+    }
+});
+</script>
+{% endblock %}

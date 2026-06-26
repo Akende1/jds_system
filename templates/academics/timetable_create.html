@@ -1,0 +1,173 @@
+{% extends 'base_frontend.html' %}
+
+{% block title %}Create Timetable Entry{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="mb-4">
+        <h2><i class="bi bi-calendar-plus text-primary"></i> Create Timetable Entry</h2>
+        <p class="text-muted mb-0">Add a lesson slot for a class and subject.</p>
+    </div>
+
+    <!-- Conflict Warning Alert -->
+    <div id="conflictAlert" class="alert alert-warning alert-dismissible fade hide" role="alert">
+        <strong>⚠️ Scheduling Conflict Detected:</strong>
+        <div id="conflictDetails" class="mt-2"></div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <form method="post" class="row g-3" id="timetableForm">
+                {% csrf_token %}
+                <div class="col-md-4">
+                    <label class="form-label">Classroom</label>
+                    <select name="classroom" id="classroomSelect" class="form-select" required>
+                        <option value="">-- Select Classroom --</option>
+                        {% for classroom in classrooms %}
+                        <option value="{{ classroom.pk }}">{{ classroom }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Subject</label>
+                    <select name="subject" class="form-select" required>
+                        {% for subject in subjects %}
+                        <option value="{{ subject.pk }}">{{ subject }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Teacher</label>
+                    <select name="teacher" id="teacherSelect" class="form-select">
+                        <option value="">-- None --</option>
+                        {% for teacher in teachers %}
+                        <option value="{{ teacher.pk }}">{{ teacher.get_full_name|default:teacher.username }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Academic Year</label>
+                    <select name="academic_year" id="academicYearSelect" class="form-select" required>
+                        {% for year in academic_years %}
+                        <option value="{{ year.pk }}">{{ year.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Term</label>
+                    <select name="term" class="form-select">
+                        <option value="">-- No term --</option>
+                        {% for term in terms %}
+                        <option value="{{ term.pk }}">{{ term }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Day of Week</label>
+                    <select name="day_of_week" id="daySelect" class="form-select" required>
+                        <option value="">-- Select Day --</option>
+                        <option value="monday">Monday</option>
+                        <option value="tuesday">Tuesday</option>
+                        <option value="wednesday">Wednesday</option>
+                        <option value="thursday">Thursday</option>
+                        <option value="friday">Friday</option>
+                        <option value="saturday">Saturday</option>
+                        <option value="sunday">Sunday</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Start Time</label>
+                    <input type="time" name="start_time" id="startTimeInput" class="form-control" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">End Time</label>
+                    <input type="time" name="end_time" id="endTimeInput" class="form-control" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Room</label>
+                    <input type="text" name="room" id="roomInput" class="form-control">
+                </div>
+                <div class="col-md-3 form-check mt-4 pt-2 ps-5">
+                    <input class="form-check-input" type="checkbox" name="is_active" id="is_active" checked>
+                    <label class="form-check-label" for="is_active">Active</label>
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Notes</label>
+                    <textarea name="notes" rows="4" class="form-control"></textarea>
+                </div>
+                <div class="col-12 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary" id="submitBtn">Save Timetable Entry</button>
+                    <a href="{% url 'frontend:timetable' %}" class="btn btn-outline-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Real-time conflict checking
+async function checkForConflicts() {
+    const classroom = document.getElementById('classroomSelect').value;
+    const teacher = document.getElementById('teacherSelect').value;
+    const day = document.getElementById('daySelect').value;
+    const startTime = document.getElementById('startTimeInput').value;
+    const endTime = document.getElementById('endTimeInput').value;
+    const room = document.getElementById('roomInput').value;
+    const academicYear = document.getElementById('academicYearSelect').value;
+    
+    // Only check if all required fields are filled
+    if (!classroom || !day || !startTime || !endTime || !academicYear) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/academics/timetable/check-conflicts/?classroom=${classroom}&teacher=${teacher}&day_of_week=${day}&start_time=${startTime}&end_time=${endTime}&room=${room}&academic_year=${academicYear}`);
+        const data = await response.json();
+        
+        const alert = document.getElementById('conflictAlert');
+        const details = document.getElementById('conflictDetails');
+        
+        if (data.has_conflicts) {
+            details.innerHTML = '';
+            
+            if (data.classroom_conflict) {
+                const item = document.createElement('div');
+                item.className = 'mb-2';
+                item.innerHTML = `<strong>Classroom Conflict:</strong> ${data.classroom_conflict.subject} with ${data.classroom_conflict.teacher} at ${data.classroom_conflict.time}`;
+                details.appendChild(item);
+            }
+            
+            if (data.teacher_conflict) {
+                const item = document.createElement('div');
+                item.className = 'mb-2';
+                item.innerHTML = `<strong>Teacher Conflict:</strong> ${data.teacher_conflict.subject} in ${data.teacher_conflict.class} at ${data.teacher_conflict.time}`;
+                details.appendChild(item);
+            }
+            
+            if (data.room_conflict) {
+                const item = document.createElement('div');
+                item.className = 'mb-2';
+                item.innerHTML = `<strong>Room Conflict:</strong> ${data.room_conflict.subject} in ${data.room_conflict.class} at ${data.room_conflict.time}`;
+                details.appendChild(item);
+            }
+            
+            alert.classList.remove('hide');
+        } else {
+            alert.classList.add('hide');
+        }
+    } catch (error) {
+        console.error('Error checking conflicts:', error);
+    }
+}
+
+// Attach listeners
+document.getElementById('classroomSelect').addEventListener('change', checkForConflicts);
+document.getElementById('teacherSelect').addEventListener('change', checkForConflicts);
+document.getElementById('daySelect').addEventListener('change', checkForConflicts);
+document.getElementById('startTimeInput').addEventListener('change', checkForConflicts);
+document.getElementById('endTimeInput').addEventListener('change', checkForConflicts);
+document.getElementById('roomInput').addEventListener('change', checkForConflicts);
+document.getElementById('academicYearSelect').addEventListener('change', checkForConflicts);
+</script>
+{% endblock %}

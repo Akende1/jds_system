@@ -1,0 +1,229 @@
+{% extends 'base_frontend.html' %}
+
+{% block title %}Generate Invoices - School Management System{% endblock %}
+
+{% block page_title %}Generate Invoices{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-10 mx-auto">
+        <div class="card">
+            <div class="card-header bg-white">
+                <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="bulk-tab" data-bs-toggle="tab" data-bs-target="#bulk" type="button">
+                            <i class="bi bi-people"></i> Bulk Generation
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="individual-tab" data-bs-toggle="tab" data-bs-target="#individual" type="button">
+                            <i class="bi bi-person"></i> Individual Invoice
+                        </button>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-body">
+                <div class="tab-content">
+                    <!-- Bulk Generation Tab -->
+                    <div class="tab-pane fade show active" id="bulk" role="tabpanel">
+                        <form method="POST" action="{% url 'frontend:invoice_generate' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="generation_type" value="bulk">
+                            
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle"></i> Generate invoices for all students in a specific grade or class. Existing unpaid invoices will not be duplicated.
+                            </div>
+                            
+                            <h6 class="border-bottom pb-2 mb-3">Select Recipients</h6>
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Target Group *</label>
+                                    <select name="target_type" class="form-select" required id="targetType">
+                                        <option value="">Select Target</option>
+                                        <option value="grade">By Grade</option>
+                                        <option value="class">By Class</option>
+                                        <option value="all">All Students</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6" id="gradeSelect" style="display:none;">
+                                    <label class="form-label">Select Grade</label>
+                                    <select name="grade" class="form-select">
+                                        <option value="">Choose Grade</option>
+                                        {% for grade in grades %}
+                                        <option value="{{ grade.id }}">{{ grade.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-6" id="classSelect" style="display:none;">
+                                    <label class="form-label">Select Class</label>
+                                    <select name="class" class="form-select">
+                                        <option value="">Choose Class</option>
+                                        {% for class in classes %}
+                                        <option value="{{ class.id }}">{{ class.name }} ({{ class.grade.name }})</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <h6 class="border-bottom pb-2 mb-3 mt-4">Invoice Details</h6>
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Fee Structure *</label>
+                                    <select name="fee_structure" class="form-select" required id="feeStructure">
+                                        <option value="">Select Fee Type</option>
+                                        {% for fee in fee_structures %}
+                                        <option value="{{ fee.id }}" data-amount="{{ fee.amount }}">
+                                            {{ fee.name }} - K {{ fee.amount|floatformat:2 }}
+                                        </option>
+                                        {% empty %}
+                                        <option value="custom">Custom Amount</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-6" id="customAmountDiv" style="display:none;">
+                                    <label class="form-label">Amount per Student *</label>
+                                    <input type="number" name="amount" class="form-control" step="0.01" min="0" placeholder="0.00">
+                                </div>
+                            </div>
+                            
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-12">
+                                    <label class="form-label">Description *</label>
+                                    <input type="text" name="description" class="form-control" placeholder="e.g., Tuition Fees - Term 1 2024" required>
+                                </div>
+                            </div>
+                            
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Due Date</label>
+                                    <input type="date" name="due_date" class="form-control">
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Additional Notes</label>
+                                <textarea name="notes" class="form-control" rows="2" placeholder="Optional notes to appear on invoices"></textarea>
+                            </div>
+                            
+                            <div id="previewSection" class="alert alert-light" style="display:none;">
+                                <h6>Generation Preview</h6>
+                                <p class="mb-1"><strong>Target:</strong> <span id="previewTarget">-</span></p>
+                                <p class="mb-1"><strong>Estimated Students:</strong> <span id="previewCount">-</span></p>
+                                <p class="mb-0"><strong>Amount per Invoice:</strong> K <span id="previewAmount">0.00</span></p>
+                            </div>
+                            
+                            <div class="alert alert-warning">
+                                <i class="bi bi-exclamation-triangle"></i> <strong>Note:</strong> This will generate invoices for all matching students. Review carefully before proceeding.
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-file-earmark-plus"></i> Generate Invoices
+                            </button>
+                        </form>
+                    </div>
+                    
+                    <!-- Individual Invoice Tab -->
+                    <div class="tab-pane fade" id="individual" role="tabpanel">
+                        <form method="POST" action="{% url 'frontend:invoice_generate' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="generation_type" value="individual">
+                            
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle"></i> Create a custom invoice for a specific student with flexible amount and description.
+                            </div>
+                            
+                            <h6 class="border-bottom pb-2 mb-3">Student Selection</h6>
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-12">
+                                    <label class="form-label">Select Student *</label>
+                                    <select name="student_id" class="form-select" required id="studentSelect">
+                                        <option value="">Choose Student</option>
+                                        {% for student in students %}
+                                        <option value="{{ student.id }}" data-grade="{{ student.grade.name }}" data-class="{{ student.current_class.name|default:'Not Assigned' }}">
+                                            {{ student.admission_number }} - {{ student.get_full_name }} ({{ student.grade.name }})
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div id="studentInfo" class="alert alert-light mb-4" style="display:none;">
+                                <h6>Student Information</h6>
+                                <p class="mb-1"><strong>Grade:</strong> <span id="studentGrade">-</span></p>
+                                <p class="mb-0"><strong>Class:</strong> <span id="studentClass">-</span></p>
+                            </div>
+                            
+                            <h6 class="border-bottom pb-2 mb-3">Invoice Details</h6>
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Amount *</label>
+                                    <input type="number" name="amount" class="form-control" step="0.01" min="0.01" placeholder="0.00" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Due Date</label>
+                                    <input type="date" name="due_date" class="form-control">
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Description *</label>
+                                <input type="text" name="description" class="form-control" placeholder="e.g., Extra Classes Fee" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Notes</label>
+                                <textarea name="notes" class="form-control" rows="2" placeholder="Optional notes"></textarea>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-file-earmark-plus"></i> Create Invoice
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Bulk generation - target type change
+document.getElementById('targetType')?.addEventListener('change', function() {
+    const gradeDiv = document.getElementById('gradeSelect');
+    const classDiv = document.getElementById('classSelect');
+    
+    gradeDiv.style.display = 'none';
+    classDiv.style.display = 'none';
+    
+    if (this.value === 'grade') {
+        gradeDiv.style.display = 'block';
+    } else if (this.value === 'class') {
+        classDiv.style.display = 'block';
+    }
+});
+
+// Fee structure change
+document.getElementById('feeStructure')?.addEventListener('change', function() {
+    const customDiv = document.getElementById('customAmountDiv');
+    if (this.value === 'custom' || this.options[this.selectedIndex]?.dataset.amount === undefined) {
+        customDiv.style.display = 'block';
+    } else {
+        customDiv.style.display = 'none';
+    }
+});
+
+// Individual - student selection
+document.getElementById('studentSelect')?.addEventListener('change', function() {
+    const option = this.options[this.selectedIndex];
+    const infoDiv = document.getElementById('studentInfo');
+    
+    if (option.value) {
+        document.getElementById('studentGrade').textContent = option.dataset.grade;
+        document.getElementById('studentClass').textContent = option.dataset.class;
+        infoDiv.style.display = 'block';
+    } else {
+        infoDiv.style.display = 'none';
+    }
+});
+</script>
+{% endblock %}

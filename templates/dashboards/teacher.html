@@ -1,0 +1,170 @@
+{% extends 'base_frontend.html' %}
+
+{% block title %}Teacher Dashboard - School Management System{% endblock %}
+
+{% block page_title %}Teacher Dashboard{% endblock %}
+
+{% block content %}
+<div class="row g-4 mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">My Classes</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    {% for assignment in my_classes %}
+                    <div class="col-md-4">
+                        <div class="p-3" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 0.75rem; color: white;">
+                            <h5>{{ assignment.class_room.name }}</h5>
+                            <p class="mb-1">{{ assignment.subject.name }}</p>
+                            <small>{{ assignment.class_room.students.count }} students</small>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="col-12 text-center text-muted py-4">
+                        No class assignments yet
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-4">
+        <div class="card border-primary h-100">
+            <div class="card-body d-flex flex-column justify-content-between">
+                <div>
+                    <h5 class="card-title">Stationery Request</h5>
+                    <p class="card-text text-muted mb-0">Request classroom supplies, printing materials, or other school items.</p>
+                </div>
+                <div class="mt-3">
+                    <a href="{% url 'frontend:stationery_request' %}" class="btn btn-primary">Open Request Form</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-6">
+        <div class="card data-table">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Pending Attendance</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Class</th>
+                                <th>Students</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in pending_attendance %}
+                            <tr>
+                                <td>{{ item.class_name }}</td>
+                                <td>{{ item.student_count }}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-primary">Mark Attendance</button>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3" class="text-center text-muted py-4">All attendance marked</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card data-table">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Assignments to Mark</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Assignment</th>
+                                <th>Class</th>
+                                <th>Due Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for assignment in assignments_to_mark %}
+                            <tr>
+                                <td>{{ assignment.title }}</td>
+                                <td>{{ assignment.class_room.name }}</td>
+                                <td>
+                                    {% if assignment.due_date < today %}
+                                        <span class="badge bg-danger">{{ assignment.due_date|date:"M d" }}</span>
+                                    {% else %}
+                                        <span class="badge bg-warning">{{ assignment.due_date|date:"M d" }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3" class="text-center text-muted py-4">No pending assignments</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mt-2">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Upcoming Exams</h5>
+            </div>
+            <div class="card-body">
+                {% for exam in upcoming_exams %}
+                <div class="mb-2 p-3" style="background: #f8f9fa; border-radius: 0.5rem;">
+                    <div class="fw-bold">{{ exam.exam_name }}</div>
+                    <div class="text-muted small">{{ exam.class_room.name }}</div>
+                    <div class="text-primary small">{{ exam.exam_date|date:"l, M d, Y" }}</div>
+                </div>
+                {% empty %}
+                <p class="text-center text-muted py-3">No upcoming exams</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Unread Messages</h5>
+            </div>
+            <div class="card-body">
+                {% if unread_messages %}
+                    {% for message in unread_messages %}
+                    <div class="mb-2 p-3" style="background: #cff4fc; border-radius: 0.5rem;">
+                        <div class="fw-bold">From: {{ message.sender.get_full_name }}</div>
+                        <div class="small text-muted">{{ message.subject }}</div>
+                        <div class="small">{{ message.sent_at|date:"M d, g:i A" }}</div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                <p class="text-center text-muted py-3">No unread messages</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

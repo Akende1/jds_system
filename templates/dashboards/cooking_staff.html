@@ -1,0 +1,292 @@
+{% extends 'base_frontend.html' %}
+
+{% block title %}Cooking Staff Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <h1 class="mb-4">🍳 Cooking Staff Portal</h1>
+    
+    {% if messages %}
+        <div class="alert alert-info alert-dismissible fade show" role="alert">
+            {% for message in messages %}
+                <p>{{ message }}</p>
+            {% endfor %}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    {% endif %}
+    
+    <!-- Quick Actions Bar -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="btn-group" role="group">
+                <a href="{% url 'frontend:restocking_form' %}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Request Restocking
+                </a>
+                {% if has_cleaning_role %}
+                    <a href="#" class="btn btn-secondary">
+                        <i class="bi bi-broom"></i> Cleaning Log
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h6 class="card-title">Paid Students</h6>
+                    <h2>{{ paid_students_count }}</h2>
+                    <small>Active lunch subscriptions</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h6 class="card-title">Today's Lunch</h6>
+                    <h2>{{ today_lunch_count }}</h2>
+                    <small>Students expected</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark">
+                <div class="card-body">
+                    <h6 class="card-title">Low Stock Items</h6>
+                    <h2>{{ low_stock_items.count }}</h2>
+                    <small>Below minimum threshold</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-danger text-white">
+                <div class="card-body">
+                    <h6 class="card-title">Out of Stock</h6>
+                    <h2>{{ critical_stock.count }}</h2>
+                    <small>Need immediate restocking</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="row">
+        <!-- Pending Restocking Requests -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Your Pending Requests</h5>
+                </div>
+                <div class="card-body">
+                    {% if pending_requests %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Item</th>
+                                        <th>Quantity</th>
+                                        <th>Status</th>
+                                        <th>Submitted</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for req in pending_requests %}
+                                        <tr>
+                                            <td>{{ req.stock_item.name }}</td>
+                                            <td>{{ req.quantity_requested }} {{ req.stock_item.unit }}</td>
+                                            <td>
+                                                <span class="badge bg-warning">{{ req.get_status_display }}</span>
+                                            </td>
+                                            <td><small>{{ req.created_at|date:"M d" }}</small></td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No pending requests. <a href="{% url 'frontend:restocking_form' %}">Create one</a></p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Approved Requests -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">Approved Requests</h5>
+                </div>
+                <div class="card-body">
+                    {% if approved_requests %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Item</th>
+                                        <th>Quantity</th>
+                                        <th>Cost Est.</th>
+                                        <th>Approved</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for req in approved_requests %}
+                                        <tr>
+                                            <td>{{ req.stock_item.name }}</td>
+                                            <td>{{ req.quantity_requested }} {{ req.stock_item.unit }}</td>
+                                            <td>K{{ req.estimated_cost }}</td>
+                                            <td><small>{{ req.reviewed_at|date:"M d" }}</small></td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No approved requests yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Stock Levels Section -->
+    <div class="row">
+        <!-- Critical Stock -->
+        <div class="col-lg-6 mb-4">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">🔴 Out of Stock (Critical)</h5>
+                </div>
+                <div class="card-body">
+                    {% if critical_stock %}
+                        <div class="list-group">
+                            {% for item in critical_stock %}
+                                <div class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <h6 class="mb-1">{{ item.name }}</h6>
+                                            <small class="text-muted">{{ item.category }}</small>
+                                        </div>
+                                        <span class="badge bg-danger">0 {{ item.unit }}</span>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">All items are in stock!</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Low Stock -->
+        <div class="col-lg-6 mb-4">
+            <div class="card border-warning">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">⚠️ Low Stock (Below Threshold)</h5>
+                </div>
+                <div class="card-body">
+                    {% if low_stock_items %}
+                        <div class="list-group">
+                            {% for item in low_stock_items %}
+                                <div class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <h6 class="mb-1">{{ item.name }}</h6>
+                                            <small class="text-muted">{{ item.category }} | Min: {{ item.minimum_threshold }} {{ item.unit }}</small>
+                                        </div>
+                                        <span class="badge bg-warning">{{ item.current_quantity }} {{ item.unit }}</span>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No low stock items.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Paid Students List -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">👨‍👩‍👧‍👦 Students with Active Lunch Subscriptions</h5>
+        </div>
+        <div class="card-body">
+            {% if paid_students %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Admission #</th>
+                                <th>Class</th>
+                                <th>Plan</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for sub in paid_students %}
+                                <tr>
+                                    <td>{{ sub.student.user.get_full_name }}</td>
+                                    <td>{{ sub.student.admission_number }}</td>
+                                    <td>{{ sub.student.current_class }}</td>
+                                    <td>{{ sub.plan.name }}</td>
+                                    <td>
+                                        <span class="badge bg-success">{{ sub.get_status_display }}</span>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-muted">No students with active lunch subscriptions.</p>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Today's Expected Lunch Attendance -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">🍽️ Today's Lunch Tracking</h5>
+        </div>
+        <div class="card-body">
+            {% if today_lunch %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Student Name</th>
+                                <th>Class</th>
+                                <th>Plan</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for attend in today_lunch %}
+                                <tr>
+                                    <td>{{ attend.subscription.student.user.get_full_name }}</td>
+                                    <td>{{ attend.subscription.student.current_class }}</td>
+                                    <td>{{ attend.subscription.plan.name }}</td>
+                                    <td>
+                                        {% if attend.took_lunch %}
+                                            <span class="badge bg-success">Attended</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Absent</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-muted">No lunch attendance records for today yet.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

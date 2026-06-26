@@ -1,0 +1,126 @@
+{% extends 'base_frontend.html' %}
+
+{% block title %}Academics - JDS Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2><i class="bi bi-book text-primary"></i> Academics</h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'frontend:dashboard' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item active">Academics</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Quick Links -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center h-100">
+                <div class="card-body">
+                    <i class="bi bi-book-half text-primary" style="font-size: 2.5rem;"></i>
+                    <h5 class="mt-3">Subjects</h5>
+                    <p class="text-muted">Manage subjects and curriculum</p>
+                    <a href="{% url 'frontend:subject_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center h-100">
+                <div class="card-body">
+                    <i class="bi bi-calendar3 text-secondary" style="font-size: 2.5rem;"></i>
+                    <h5 class="mt-3">Timetable</h5>
+                    <p class="text-muted">View class schedules and lesson slots</p>
+                    <a href="{% url 'frontend:timetable_view' %}" class="btn btn-sm btn-outline-secondary">Open Timetable</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center h-100">
+                <div class="card-body">
+                    <i class="bi bi-calendar-event text-danger" style="font-size: 2.5rem;"></i>
+                    <h5 class="mt-3">Calendar</h5>
+                    <p class="text-muted">School events and meeting dates</p>
+                    <a href="{% url 'frontend:academic_calendar_view' %}" class="btn btn-sm btn-outline-danger">Open Calendar</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center h-100">
+                <div class="card-body">
+                    <i class="bi bi-clipboard-check text-success" style="font-size: 2.5rem;"></i>
+                    <h5 class="mt-3">Exams</h5>
+                    <p class="text-muted">View and manage exams</p>
+                    <a href="{% url 'frontend:exam_list' %}" class="btn btn-sm btn-outline-success">View Exams</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center h-100">
+                <div class="card-body">
+                    <i class="bi bi-bar-chart text-info" style="font-size: 2.5rem;"></i>
+                    <h5 class="mt-3">Results</h5>
+                    <p class="text-muted">View exam results</p>
+                    <a href="{% url 'frontend:result_list' %}" class="btn btn-sm btn-outline-info">View Results</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center h-100">
+                <div class="card-body">
+                    <i class="bi bi-file-earmark-text text-warning" style="font-size: 2.5rem;"></i>
+                    <h5 class="mt-3">Report Cards</h5>
+                    <p class="text-muted">View and edit student report cards</p>
+                    <a href="{% url 'frontend:student_list' %}" class="btn btn-sm btn-outline-warning">Open Students</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Subjects List -->
+    <div class="card">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">All Subjects</h5>
+            <span class="badge bg-primary">{{ subjects|length }} Subjects</span>
+        </div>
+        <div class="card-body">
+            {% if subjects %}
+            <div class="row">
+                {% for subject in subjects %}
+                <div class="col-md-4 mb-3">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h6 class="card-title">
+                                <i class="bi bi-book"></i> {{ subject.name }}
+                            </h6>
+                            <p class="text-muted small mb-2">Code: {{ subject.code }}</p>
+                            {% if subject.description %}
+                            <p class="small text-secondary">{{ subject.description|truncatewords:15 }}</p>
+                            {% endif %}
+                            <div class="d-flex justify-content-between align-items-center mt-3">
+                                <span class="badge bg-light text-dark">{{ subject.category|default:"General" }}</span>
+                                {% if subject.is_core %}
+                                <span class="badge bg-success">Core</span>
+                                {% else %}
+                                <span class="badge bg-secondary">Elective</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-book text-muted" style="font-size: 3rem;"></i>
+                <p class="text-muted mt-3">No subjects found.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

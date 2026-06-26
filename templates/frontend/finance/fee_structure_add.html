@@ -1,0 +1,73 @@
+{% extends 'base_frontend.html' %}
+
+{% block title %}Add Fee Structure - JDS Management{% endblock %}
+
+{% block content %}
+<div>
+    <div class="mb-4">
+        <h2><i class="bi bi-plus-circle text-primary"></i> Add Fee Structure</h2>
+        <p class="text-muted mb-0">Create a grade-based fee record for invoice generation and potential earnings.</p>
+    </div>
+
+    <div class="form-card form-card-narrow">
+            <form method="post" class="form-grid">
+                {% csrf_token %}
+                <div>
+                    <label class="form-label">Name</label>
+                    <input type="text" name="name" class="form-control" placeholder="Tuition Fee" required>
+                </div>
+                <div>
+                    <label class="form-label">Fee Type</label>
+                    <select name="fee_type" class="form-select">
+                        {% for value, label in fee_types %}
+                        <option value="{{ value }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label">Grade</label>
+                    <select name="grade" class="form-select">
+                        <option value="">All Grades</option>
+                        {% for grade in grades %}
+                        <option value="{{ grade.id }}">{{ grade.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label">Academic Year</label>
+                    <select name="academic_year" class="form-select" required>
+                        {% for year in years %}
+                        <option value="{{ year.id }}">{{ year.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label">Amount</label>
+                    <input type="number" step="0.01" min="0" name="amount" class="form-control" required>
+                </div>
+                <div>
+                    <label class="form-label">Payment Frequency</label>
+                    <select name="payment_frequency" class="form-select">
+                        {% for value, label in payment_frequencies %}
+                        <option value="{{ value }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="d-flex align-items-end">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="is_compulsory" id="is_compulsory" checked>
+                        <label class="form-check-label" for="is_compulsory">Compulsory fee</label>
+                    </div>
+                </div>
+                <div class="full-width">
+                    <label class="form-label">Description</label>
+                    <textarea name="description" rows="4" class="form-control" placeholder="Optional notes about this fee structure"></textarea>
+                </div>
+                <div class="full-width d-flex justify-content-end gap-2">
+                    <a href="{% url 'frontend:fee_structure_list' %}" class="btn btn-outline-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary">Save Fee Structure</button>
+                </div>
+            </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,372 @@
+{% extends 'base_frontend.html' %}
+
+{% block title %}Communication Hub{% endblock %}
+
+{% block content %}
+<div>
+    <div class="mb-4">
+        <h2><i class="bi bi-megaphone text-primary"></i> Communication Hub</h2>
+        <p class="text-muted mb-0">Manage announcements, internal messages, reminders, and newsletters from one place.</p>
+    </div>
+
+    <div class="communication-summary-grid">
+        <article class="stat-card">
+            <div class="card-body">
+                <p class="stat-label">Announcements</p>
+                <h3 class="stat-value">{{ announcements|length }}</h3>
+                <span class="stat-icon-wrap"><i class="bi bi-megaphone"></i></span>
+            </div>
+        </article>
+        <article class="stat-card">
+            <div class="card-body">
+                <p class="stat-label">Messages</p>
+                <h3 class="stat-value">{{ messages_inbox|length }}</h3>
+                <span class="stat-icon-wrap"><i class="bi bi-chat-dots"></i></span>
+            </div>
+        </article>
+        <article class="stat-card">
+            <div class="card-body">
+                <p class="stat-label">Email Reminders</p>
+                <h3 class="stat-value">{{ email_logs|length }}</h3>
+                <span class="stat-icon-wrap"><i class="bi bi-envelope"></i></span>
+            </div>
+        </article>
+        <article class="stat-card">
+            <div class="card-body">
+                <p class="stat-label">SMS Logs</p>
+                <h3 class="stat-value">{{ sms_logs|length }}</h3>
+                <span class="stat-icon-wrap"><i class="bi bi-chat-left-text"></i></span>
+            </div>
+        </article>
+    </div>
+
+    <div class="module-tabs" role="tablist" aria-label="Communication forms">
+        <button type="button" class="module-tab active" data-tab-target="tab-announcements">Announcements</button>
+        <button type="button" class="module-tab" data-tab-target="tab-messages">Messages</button>
+        <button type="button" class="module-tab" data-tab-target="tab-reminders">Reminders</button>
+        <button type="button" class="module-tab" data-tab-target="tab-newsletters">Newsletters</button>
+        <button type="button" class="module-tab" data-tab-target="tab-appointments">Appointments</button>
+    </div>
+
+    <section id="tab-announcements" class="tab-panel is-active">
+        <div class="form-card form-card-narrow mb-4">
+            <h5 class="mb-2">Create Announcement</h5>
+            <p class="text-muted">Announcements are routed for approval when submitted by non-admin users.</p>
+            <form method="post" class="form-grid">
+                {% csrf_token %}
+                <input type="hidden" name="action_type" value="announcement">
+                <div>
+                    <label class="form-label">Title</label>
+                    <input type="text" name="title" class="form-control" placeholder="Title" required>
+                </div>
+                <div>
+                    <label class="form-label">Priority</label>
+                    <select name="priority" class="form-select">
+                        <option value="normal">Normal</option>
+                        <option value="high">High</option>
+                        <option value="urgent">Urgent</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label">Target Audience</label>
+                    <select name="target_audience" class="form-select">
+                        <option value="all">Everyone</option>
+                        <option value="students">Students</option>
+                        <option value="parents">Parents</option>
+                        <option value="staff">Staff</option>
+                        <option value="teachers">Teachers</option>
+                    </select>
+                </div>
+                <div class="full-width">
+                    <label class="form-label">Content</label>
+                    <textarea name="content" class="form-control" rows="4" placeholder="Announcement content" required></textarea>
+                </div>
+                <div class="full-width form-actions">
+                    <button class="btn btn-outline-secondary" type="reset">Cancel</button>
+                    <button class="btn btn-primary" type="submit">Submit Announcement</button>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <section id="tab-messages" class="tab-panel">
+        <div class="form-card form-card-narrow mb-4">
+            <h5 class="mb-2">Send Message</h5>
+            <p class="text-muted">Use this to communicate with staff or parents. Non-admin submissions remain pending until approved.</p>
+            <form method="post" class="form-grid">
+                {% csrf_token %}
+                <input type="hidden" name="action_type" value="message">
+                <div>
+                    <label class="form-label">Recipient</label>
+                    <select name="recipient" class="form-select" required>
+                        <option value="">Select user</option>
+                        {% for user in staff_users %}
+                        <option value="{{ user.id }}">{{ user.get_full_name|default:user.username }} ({{ user.get_user_type_display }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label">Subject</label>
+                    <input type="text" name="subject" class="form-control" placeholder="Subject" required>
+                </div>
+                <div class="full-width">
+                    <label class="form-label">Message Body</label>
+                    <textarea name="body" class="form-control" rows="4" placeholder="Message body" required></textarea>
+                </div>
+                <div class="full-width form-actions">
+                    <button class="btn btn-outline-secondary" type="reset">Cancel</button>
+                    <button class="btn btn-primary" type="submit">Submit Message</button>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <section id="tab-reminders" class="tab-panel">
+        <div class="form-card form-card-narrow mb-4">
+            <h5 class="mb-3">Send Reminder</h5>
+            <form method="post" class="form-grid">
+                {% csrf_token %}
+                <input type="hidden" name="action_type" value="reminder">
+                <div>
+                    <label class="form-label">Audience</label>
+                    <select name="audience" class="form-select">
+                        <option value="staff">Staff</option>
+                        <option value="parents">Parents</option>
+                        <option value="students">Students</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label">Channel</label>
+                    <select name="channel" class="form-select">
+                        <option value="email">Email</option>
+                        <option value="sms">SMS</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label">Subject</label>
+                    <input type="text" name="subject" class="form-control" placeholder="Reminder subject" required>
+                </div>
+                <div class="full-width">
+                    <label class="form-label">Reminder Body</label>
+                    <textarea name="body" class="form-control" rows="4" placeholder="Reminder body" required></textarea>
+                </div>
+                <div class="full-width form-actions">
+                    <button class="btn btn-outline-secondary" type="reset">Cancel</button>
+                    <button class="btn btn-primary" type="submit">Queue Reminder</button>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <section id="tab-newsletters" class="tab-panel">
+        <div class="form-card form-card-narrow mb-4">
+            <h5 class="mb-3">Newsletter</h5>
+            <form method="post" class="form-grid">
+                {% csrf_token %}
+                <input type="hidden" name="action_type" value="newsletter">
+                <div>
+                    <label class="form-label">Title</label>
+                    <input type="text" name="title" class="form-control" placeholder="Newsletter title" required>
+                </div>
+                <div>
+                    <label class="form-label">Issue #</label>
+                    <input type="text" name="issue_number" class="form-control" placeholder="Issue #" required>
+                </div>
+                <div class="d-flex align-items-end">
+                    <input class="form-check-input" type="checkbox" name="is_published" id="is_published">
+                    <label class="form-check-label ms-2" for="is_published">Publish now</label>
+                </div>
+                <div class="full-width">
+                    <label class="form-label">Content</label>
+                    <textarea name="content" class="form-control" rows="4" placeholder="Newsletter content" required></textarea>
+                </div>
+                <div class="full-width form-actions">
+                    <button class="btn btn-outline-secondary" type="reset">Cancel</button>
+                    <button class="btn btn-primary" type="submit">Save Newsletter</button>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <section id="tab-appointments" class="tab-panel">
+        <div class="form-card form-card-narrow mb-4">
+            <h5 class="mb-3">Book Appointment</h5>
+            <p class="text-muted">All appointment requests are routed through management approval.</p>
+            <form method="post" class="form-grid">
+                {% csrf_token %}
+                <input type="hidden" name="action_type" value="appointment">
+                <div>
+                    <label class="form-label">Meet With</label>
+                    <select name="meeting_with" class="form-select">
+                        <option value="teacher">Teacher</option>
+                        <option value="management">Management</option>
+                        <option value="both">Teacher and Management</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label">Specific Staff Member</label>
+                    <select name="specific_staff" class="form-select">
+                        <option value="">Any available</option>
+                        {% for user in staff_users %}
+                        <option value="{{ user.id }}">{{ user.get_full_name|default:user.username }} ({{ user.get_user_type_display }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label">Preferred Date</label>
+                    <input type="date" name="preferred_date" class="form-control" required>
+                </div>
+                <div>
+                    <label class="form-label">Preferred Time</label>
+                    <input type="time" name="preferred_time" class="form-control">
+                </div>
+                <div>
+                    <label class="form-label">Duration (Minutes)</label>
+                    <input type="number" min="15" step="15" name="duration_minutes" class="form-control" value="30">
+                </div>
+                <div>
+                    <label class="form-label">Location</label>
+                    <input type="text" name="location" class="form-control" placeholder="Meeting location">
+                </div>
+                <div class="full-width">
+                    <label class="form-label">Subject</label>
+                    <input type="text" name="subject" class="form-control" placeholder="Appointment subject" required>
+                </div>
+                <div class="full-width">
+                    <label class="form-label">Details</label>
+                    <textarea name="details" class="form-control" rows="4" placeholder="Describe what you want to discuss" required></textarea>
+                </div>
+                <div class="full-width form-actions">
+                    <button class="btn btn-outline-secondary" type="reset">Cancel</button>
+                    <button class="btn btn-primary" type="submit">Submit Appointment Request</button>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <div class="card shadow-sm mt-4">
+        <div class="card-body">
+            <h5 class="mb-3">Pending Approvals</h5>
+            <div class="row g-4">
+                <div class="col-lg-4">
+                    <h6>Announcements</h6>
+                    {% for item in pending_announcements %}
+                    <form method="post" class="border rounded-3 p-3 mb-2">
+                        {% csrf_token %}
+                        <input type="hidden" name="action_type" value="approve_item">
+                        <input type="hidden" name="item_type" value="announcement">
+                        <input type="hidden" name="item_id" value="{{ item.pk }}">
+                        <div class="fw-semibold">{{ item.title }}</div>
+                        <div class="text-muted small mb-2">{{ item.posted_by.get_full_name|default:item.posted_by.username }}</div>
+                        <textarea name="approval_notes" class="form-control form-control-sm mb-2" rows="2" placeholder="Optional notes"></textarea>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-sm btn-success" type="submit">Approve</button>
+                            <button class="btn btn-sm btn-outline-danger" formaction="" name="action_type" value="reject_item" type="submit">Reject</button>
+                        </div>
+                    </form>
+                    {% empty %}
+                    <p class="text-muted">No pending announcements.</p>
+                    {% endfor %}
+                </div>
+                <div class="col-lg-4">
+                    <h6>Messages</h6>
+                    {% for item in pending_messages %}
+                    <form method="post" class="border rounded-3 p-3 mb-2">
+                        {% csrf_token %}
+                        <input type="hidden" name="action_type" value="approve_item">
+                        <input type="hidden" name="item_type" value="message">
+                        <input type="hidden" name="item_id" value="{{ item.pk }}">
+                        <div class="fw-semibold">{{ item.subject }}</div>
+                        <div class="text-muted small mb-2">To {{ item.recipient.get_full_name|default:item.recipient.username }}</div>
+                        <textarea name="approval_notes" class="form-control form-control-sm mb-2" rows="2" placeholder="Optional notes"></textarea>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-sm btn-success" type="submit">Approve</button>
+                            <button class="btn btn-sm btn-outline-danger" formaction="" name="action_type" value="reject_item" type="submit">Reject</button>
+                        </div>
+                    </form>
+                    {% empty %}
+                    <p class="text-muted">No pending messages.</p>
+                    {% endfor %}
+                </div>
+                <div class="col-lg-4">
+                    <h6>Appointments</h6>
+                    {% for item in pending_appointments %}
+                    <form method="post" class="border rounded-3 p-3 mb-2">
+                        {% csrf_token %}
+                        <input type="hidden" name="action_type" value="approve_item">
+                        <input type="hidden" name="item_type" value="appointment">
+                        <input type="hidden" name="item_id" value="{{ item.pk }}">
+                        <div class="fw-semibold">{{ item.subject }}</div>
+                        <div class="text-muted small mb-2">{{ item.requested_by.get_full_name|default:item.requested_by.username }}</div>
+                        <textarea name="approval_notes" class="form-control form-control-sm mb-2" rows="2" placeholder="Optional notes"></textarea>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-sm btn-success" type="submit">Approve</button>
+                            <button class="btn btn-sm btn-outline-danger" formaction="" name="action_type" value="reject_item" type="submit">Reject</button>
+                        </div>
+                    </form>
+                    {% empty %}
+                    <p class="text-muted">No pending appointments.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mt-4">
+        <div class="card-body">
+            <h5 class="mb-3">Recent Appointment Requests</h5>
+            {% if appointments %}
+            <div class="table-responsive">
+                <table class="table table-sm align-middle">
+                    <thead>
+                        <tr>
+                            <th>Requested By</th>
+                            <th>Subject</th>
+                            <th>With</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for appointment in appointments %}
+                        <tr>
+                            <td>{{ appointment.requested_by.get_full_name|default:appointment.requested_by.username }}</td>
+                            <td>{{ appointment.subject }}</td>
+                            <td>{{ appointment.get_meeting_with_display }}</td>
+                            <td>{{ appointment.preferred_date|date:'M d, Y' }}</td>
+                            <td><span class="badge bg-secondary">{{ appointment.get_status_display }}</span></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted mb-0">No appointment requests yet.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    (function() {
+        const tabButtons = document.querySelectorAll('[data-tab-target]');
+        const tabPanels = document.querySelectorAll('.tab-panel');
+
+        tabButtons.forEach((button) => {
+            button.addEventListener('click', () => {
+                const targetId = button.getAttribute('data-tab-target');
+                tabButtons.forEach((btn) => btn.classList.remove('active'));
+                tabPanels.forEach((panel) => panel.classList.remove('is-active'));
+
+                button.classList.add('active');
+                const targetPanel = document.getElementById(targetId);
+                if (targetPanel) {
+                    targetPanel.classList.add('is-active');
+                }
+            });
+        });
+    })();
+</script>
+{% endblock %}

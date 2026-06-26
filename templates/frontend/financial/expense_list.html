@@ -1,0 +1,180 @@
+{% extends 'base_frontend.html' %}
+
+{% block title %}Expenses - JDS Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2><i class="bi bi-arrow-up-circle text-danger"></i> Expenses</h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'frontend:dashboard' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'frontend:financial_overview' %}">Financial</a></li>
+                    <li class="breadcrumb-item active">Expenses</li>
+                </ol>
+            </nav>
+        </div>
+        <a href="{% url 'frontend:expense_add' %}" class="btn btn-danger">
+            <i class="bi bi-plus-circle"></i> Add Expense
+        </a>
+    </div>
+
+    <!-- Filter Card -->
+    <div class="form-card mb-4">
+            <form method="get" class="form-grid filter-form">
+                <div>
+                    <label class="form-label">Date</label>
+                    <input type="date" class="form-control" name="date" value="{{ request.GET.date }}">
+                </div>
+                <div>
+                    <label class="form-label">Category</label>
+                    <select class="form-select" name="category">
+                        <option value="">All Categories</option>
+                        <option value="Utilities" {% if request.GET.category == 'Utilities' %}selected{% endif %}>Utilities</option>
+                        <option value="Maintenance" {% if request.GET.category == 'Maintenance' %}selected{% endif %}>Maintenance</option>
+                        <option value="Supplies" {% if request.GET.category == 'Supplies' %}selected{% endif %}>Supplies</option>
+                        <option value="Transport" {% if request.GET.category == 'Transport' %}selected{% endif %}>Transport</option>
+                        <option value="Marketing" {% if request.GET.category == 'Marketing' %}selected{% endif %}>Marketing</option>
+                        <option value="Other" {% if request.GET.category == 'Other' %}selected{% endif %}>Other</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label">Search</label>
+                    <input type="text" class="form-control" name="search" placeholder="Description..." value="{{ request.GET.search }}">
+                </div>
+                <div>
+                    <label class="form-label">&nbsp;</label>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-search"></i> Filter
+                    </button>
+                </div>
+            </form>
+    </div>
+
+    <!-- Summary -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row text-center">
+                <div class="col-md-6">
+                    <h6 class="text-muted">Total Expenses</h6>
+                    <h3>{{ expenses.count }}</h3>
+                </div>
+                <div class="col-md-6">
+                    <h6 class="text-muted">Total Amount</h6>
+                    <h3 class="text-danger">K {{ total_expenses|floatformat:2 }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Expenses Table -->
+    <div class="card">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">Expense Records</h5>
+        </div>
+        <div class="card-body">
+            {% if expenses %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Category</th>
+                            <th>Description</th>
+                            <th>Amount</th>
+                            <th>Approved By</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for expense in expenses %}
+                        <tr>
+                            <td>{{ expense.date|date:"d M Y" }}</td>
+                            <td>
+                                <span class="badge bg-secondary">{{ expense.category }}</span>
+                            </td>
+                            <td>{{ expense.description|truncatewords:10 }}</td>
+                            <td><strong>K {{ expense.amount|floatformat:2 }}</strong></td>
+                            <td>
+                                {% if expense.approved_by %}
+                                {{ expense.approved_by.get_full_name }}
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#expenseModal{{ expense.id }}">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </td>
+                        </tr>
+
+                        <!-- Expense Detail Modal -->
+                        <div class="modal fade" id="expenseModal{{ expense.id }}" tabindex="-1">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Expense Details</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <dl class="row">
+                                            <dt class="col-sm-4">Date:</dt>
+                                            <dd class="col-sm-8">{{ expense.date|date:"d M Y" }}</dd>
+
+                                            <dt class="col-sm-4">Category:</dt>
+                                            <dd class="col-sm-8">{{ expense.category }}</dd>
+
+                                            <dt class="col-sm-4">Amount:</dt>
+                                            <dd class="col-sm-8"><strong>K {{ expense.amount|floatformat:2 }}</strong></dd>
+
+                                            <dt class="col-sm-4">Description:</dt>
+                                            <dd class="col-sm-8">{{ expense.description }}</dd>
+
+                                            <dt class="col-sm-4">Approved By:</dt>
+                                            <dd class="col-sm-8">
+                                                {% if expense.approved_by %}
+                                                {{ expense.approved_by.get_full_name }}
+                                                {% else %}
+                                                <span class="text-muted">Not approved</span>
+                                                {% endif %}
+                                            </dd>
+
+                                            <dt class="col-sm-4">Created:</dt>
+                                            <dd class="col-sm-8">{{ expense.created_at|date:"d M Y H:i" }}</dd>
+                                        </dl>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="3" class="text-end"><strong>Total:</strong></td>
+                            <td><strong>K {{ total_expenses|floatformat:2 }}</strong></td>
+                            <td colspan="2"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-arrow-up-circle text-muted" style="font-size: 3rem;"></i>
+                <p class="text-muted mt-3">No expense records found.</p>
+                <a href="{% url 'frontend:expense_add' %}" class="btn btn-danger mt-2">
+                    <i class="bi bi-plus-circle"></i> Add First Expense
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

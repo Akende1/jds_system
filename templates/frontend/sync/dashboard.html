@@ -1,0 +1,175 @@
+{% extends 'base_frontend.html' %}
+
+{% block title %}Sync Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+        <div>
+            <h2><i class="bi bi-arrow-repeat text-primary"></i> Sync Dashboard</h2>
+            <p class="text-muted mb-0">Track offline changes, conflict resolution, and recent sync activity.</p>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="{% url 'frontend:sync_dashboard' %}" class="btn btn-outline-primary">Refresh</a>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small text-uppercase">Pending Sync Items</div>
+                    <div class="display-6 fw-semibold">{{ pending_count }}</div>
+                    <div class="text-muted">Records waiting to be pushed from the device queue.</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small text-uppercase">Open Conflicts</div>
+                    <div class="display-6 fw-semibold">{{ conflict_count }}</div>
+                    <div class="text-muted">Records requiring a local vs remote decision.</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small text-uppercase">Failed Sync Logs</div>
+                    <div class="display-6 fw-semibold">{{ failed_count }}</div>
+                    <div class="text-muted">Logs marked as failed during sync operations.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-xl-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Recent Sync Logs</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0 align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Type</th>
+                                    <th>Status</th>
+                                    <th>Pushed</th>
+                                    <th>Pulled</th>
+                                    <th>Failed</th>
+                                    <th>Started</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for log in sync_logs %}
+                                <tr>
+                                    <td>{{ log.get_sync_type_display }}</td>
+                                    <td><span class="badge bg-secondary">{{ log.get_status_display }}</span></td>
+                                    <td>{{ log.records_pushed }}</td>
+                                    <td>{{ log.records_pulled }}</td>
+                                    <td>{{ log.records_failed }}</td>
+                                    <td>{{ log.started_at }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted py-4">No sync logs yet.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Pending Queue</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0 align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Model</th>
+                                    <th>Record</th>
+                                    <th>Operation</th>
+                                    <th>Device</th>
+                                    <th>Created</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in pending_syncs %}
+                                <tr>
+                                    <td>{{ item.model_name }}</td>
+                                    <td>{{ item.record_id }}</td>
+                                    <td>{{ item.get_operation_display }}</td>
+                                    <td>{{ item.device_id }}</td>
+                                    <td>{{ item.created_at }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted py-4">No pending sync items.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Registered Devices</h5>
+                </div>
+                <div class="card-body">
+                    {% for device in devices %}
+                    <div class="border rounded-3 p-3 mb-3">
+                        <div class="fw-semibold">{{ device.device_name }}</div>
+                        <div class="text-muted small">{{ device.device_id }}</div>
+                        <div class="text-muted small">Last sync: {{ device.last_sync_at|default:'Never' }}</div>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted mb-0">No devices registered yet.</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Open Conflicts</h5>
+                </div>
+                <div class="card-body">
+                    {% for conflict in conflicts %}
+                    <form method="post" class="border rounded-3 p-3 mb-3">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="resolve_conflict">
+                        <input type="hidden" name="conflict_id" value="{{ conflict.pk }}">
+                        <div class="fw-semibold">{{ conflict.model_name }} #{{ conflict.record_id }}</div>
+                        <div class="text-muted small mb-2">Detected {{ conflict.detected_at }}</div>
+                        <div class="mb-2">
+                            <select name="resolution" class="form-select form-select-sm">
+                                <option value="use_local">Use Local</option>
+                                <option value="use_remote">Use Remote</option>
+                                <option value="merge">Merge</option>
+                                <option value="skip">Skip</option>
+                            </select>
+                        </div>
+                        <div class="mb-2">
+                            <textarea name="resolution_notes" rows="2" class="form-control form-control-sm" placeholder="Resolution notes"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-sm btn-primary w-100">Save Resolution</button>
+                    </form>
+                    {% empty %}
+                    <p class="text-muted mb-0">No open conflicts.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,4 @@
+Dear {{ student_name }}, payment of K {{ amount|floatformat:2 }} has been received for receipt {{ receipt_number }}.
+Method: {{ payment_method }}
+Date: {{ payment_date|date:"d M Y" }}
+Thank you.

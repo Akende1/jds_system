@@ -1,0 +1,191 @@
+{% extends 'base_frontend.html' %}
+
+{% block title %}Edit Timetable{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="mb-4">
+        <h2><i class="bi bi-pencil-square text-primary"></i> Edit Timetable Entry</h2>
+        <p class="text-muted mb-0">{{ timetable_entry.classroom }} - {{ timetable_entry.get_day_of_week_display }} {{ timetable_entry.start_time }} to {{ timetable_entry.end_time }}</p>
+    </div>
+
+    {% if error_message %}
+    <div class="alert alert-danger">{{ error_message }}</div>
+    {% endif %}
+
+    <!-- Conflict Warning Alert -->
+    <div id="conflictAlert" class="alert alert-warning alert-dismissible fade hide" role="alert">
+        <strong>⚠️ Scheduling Conflict Detected:</strong>
+        <div id="conflictDetails" class="mt-2"></div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <form method="post" class="row g-3" id="timetableForm">
+                {% csrf_token %}
+                <div class="col-md-4">
+                    <label class="form-label">Classroom</label>
+                    <select name="classroom" id="classroomSelect" class="form-select">
+                        {% for classroom in classrooms %}
+                        <option value="{{ classroom.pk }}" {% if classroom.pk == timetable_entry.classroom_id %}selected{% endif %}>{{ classroom }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Subject</label>
+                    <select name="subject" class="form-select">
+                        {% for subject in subjects %}
+                        <option value="{{ subject.pk }}" {% if subject.pk == timetable_entry.subject_id %}selected{% endif %}>{{ subject }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Teacher</label>
+                    <select name="teacher" id="teacherSelect" class="form-select">
+                        <option value="">-- None --</option>
+                        {% for teacher in teachers %}
+                        <option value="{{ teacher.pk }}" {% if teacher.pk == timetable_entry.teacher_id %}selected{% endif %}>{{ teacher.get_full_name|default:teacher.username }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Academic Year</label>
+                    <select name="academic_year" id="academicYearSelect" class="form-select">
+                        {% for year in academic_years %}
+                        <option value="{{ year.pk }}" {% if year.pk == timetable_entry.academic_year_id %}selected{% endif %}>{{ year.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Term</label>
+                    <select name="term" class="form-select">
+                        <option value="">-- No term --</option>
+                        {% for term in terms %}
+                        <option value="{{ term.pk }}" {% if term.pk == timetable_entry.term_id %}selected{% endif %}>{{ term }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Day of Week</label>
+                    <select name="day_of_week" id="daySelect" class="form-select">
+                        <option value="monday" {% if timetable_entry.day_of_week == 'monday' %}selected{% endif %}>Monday</option>
+                        <option value="tuesday" {% if timetable_entry.day_of_week == 'tuesday' %}selected{% endif %}>Tuesday</option>
+                        <option value="wednesday" {% if timetable_entry.day_of_week == 'wednesday' %}selected{% endif %}>Wednesday</option>
+                        <option value="thursday" {% if timetable_entry.day_of_week == 'thursday' %}selected{% endif %}>Thursday</option>
+                        <option value="friday" {% if timetable_entry.day_of_week == 'friday' %}selected{% endif %}>Friday</option>
+                        <option value="saturday" {% if timetable_entry.day_of_week == 'saturday' %}selected{% endif %}>Saturday</option>
+                        <option value="sunday" {% if timetable_entry.day_of_week == 'sunday' %}selected{% endif %}>Sunday</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Start Time</label>
+                    <input type="time" name="start_time" id="startTimeInput" class="form-control" value="{{ timetable_entry.start_time|time:'H:i' }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">End Time</label>
+                    <input type="time" name="end_time" id="endTimeInput" class="form-control" value="{{ timetable_entry.end_time|time:'H:i' }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Room</label>
+                    <input type="text" name="room" id="roomInput" class="form-control" value="{{ timetable_entry.room }}">
+                </div>
+                <div class="col-md-3 form-check mt-4 pt-2 ps-5">
+                    <input class="form-check-input" type="checkbox" name="is_active" id="is_active" {% if timetable_entry.is_active %}checked{% endif %}>
+                    <label class="form-check-label" for="is_active">Active</label>
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Notes</label>
+                    <textarea name="notes" rows="4" class="form-control">{{ timetable_entry.notes }}</textarea>
+                </div>
+
+                {% if requires_extra_confirmation %}
+                <div class="col-12">
+                    <label class="form-label">Reason for Edit</label>
+                    <textarea name="edit_reason" rows="3" class="form-control" required></textarea>
+                </div>
+                <div class="col-12 form-check ms-2">
+                    <input class="form-check-input" type="checkbox" name="confirm_changes" id="confirm_changes" required>
+                    <label class="form-check-label" for="confirm_changes">I confirm these timetable changes have been reviewed.</label>
+                </div>
+                {% endif %}
+
+                <div class="col-12 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                    <a href="{% url 'frontend:timetable' %}" class="btn btn-outline-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Real-time conflict checking
+async function checkForConflicts() {
+    const classroom = document.getElementById('classroomSelect').value;
+    const teacher = document.getElementById('teacherSelect').value;
+    const day = document.getElementById('daySelect').value;
+    const startTime = document.getElementById('startTimeInput').value;
+    const endTime = document.getElementById('endTimeInput').value;
+    const room = document.getElementById('roomInput').value;
+    const academicYear = document.getElementById('academicYearSelect').value;
+    const timetableId = {{ timetable_entry.id }};
+    
+    // Only check if all required fields are filled
+    if (!classroom || !day || !startTime || !endTime || !academicYear) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/academics/timetable/check-conflicts/?classroom=${classroom}&teacher=${teacher}&day_of_week=${day}&start_time=${startTime}&end_time=${endTime}&room=${room}&academic_year=${academicYear}&timetable_id=${timetableId}`);
+        const data = await response.json();
+        
+        const alert = document.getElementById('conflictAlert');
+        const details = document.getElementById('conflictDetails');
+        
+        if (data.has_conflicts) {
+            details.innerHTML = '';
+            
+            if (data.classroom_conflict) {
+                const item = document.createElement('div');
+                item.className = 'mb-2';
+                item.innerHTML = `<strong>Classroom Conflict:</strong> ${data.classroom_conflict.subject} with ${data.classroom_conflict.teacher} at ${data.classroom_conflict.time}`;
+                details.appendChild(item);
+            }
+            
+            if (data.teacher_conflict) {
+                const item = document.createElement('div');
+                item.className = 'mb-2';
+                item.innerHTML = `<strong>Teacher Conflict:</strong> ${data.teacher_conflict.subject} in ${data.teacher_conflict.class} at ${data.teacher_conflict.time}`;
+                details.appendChild(item);
+            }
+            
+            if (data.room_conflict) {
+                const item = document.createElement('div');
+                item.className = 'mb-2';
+                item.innerHTML = `<strong>Room Conflict:</strong> ${data.room_conflict.subject} in ${data.room_conflict.class} at ${data.room_conflict.time}`;
+                details.appendChild(item);
+            }
+            
+            alert.classList.remove('hide');
+        } else {
+            alert.classList.add('hide');
+        }
+    } catch (error) {
+        console.error('Error checking conflicts:', error);
+    }
+}
+
+// Attach listeners
+document.getElementById('classroomSelect').addEventListener('change', checkForConflicts);
+document.getElementById('teacherSelect').addEventListener('change', checkForConflicts);
+document.getElementById('daySelect').addEventListener('change', checkForConflicts);
+document.getElementById('startTimeInput').addEventListener('change', checkForConflicts);
+document.getElementById('endTimeInput').addEventListener('change', checkForConflicts);
+document.getElementById('roomInput').addEventListener('change', checkForConflicts);
+document.getElementById('academicYearSelect').addEventListener('change', checkForConflicts);
+
+// Initial check on page load
+checkForConflicts();
+</script>
+{% endblock %}

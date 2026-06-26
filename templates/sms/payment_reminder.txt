@@ -1,0 +1,7 @@
+Dear {{ recipient_name }}, payment is due for {{ school_name }}.
+
+Outstanding balance: K {{ total_balance|floatformat:2 }}
+
+{% for child in children %}- {{ child.student_name }}{% if child.class_name %} ({{ child.class_name }}){% endif %}: K {{ child.balance|floatformat:2 }}
+{% endfor %}
+Please settle the balance before {{ earliest_due_date|date:"d M Y" }}.

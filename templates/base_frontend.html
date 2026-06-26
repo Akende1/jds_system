@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}School Management System{% endblock %}</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{% static 'css/frontend-shell.css' %}">
+    <link rel="stylesheet" href="{% static 'css/frontend-modules.css' %}">
+    <!-- Chart.js for dashboard statistics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="app-container">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-brand">
+                <h4>JDS Management</h4>
+                <div class="user-role">
+                    <i class="bi bi-person-circle"></i>
+                    {{ request.user.get_full_name|default:request.user.username }}
+                    <br>
+                    <small>{{ request.user.get_user_type_display }}</small>
+                </div>
+            </div>
+            <button class="sidebar-toggle-btn" id="sidebarCollapseToggle" type="button" aria-label="Toggle sidebar">
+                <i class="bi bi-chevron-left"></i>
+            </button>
+        </div>
+        
+        <nav class="sidebar-menu">
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="{% url 'frontend:dashboard' %}">
+                        <i class="bi bi-speedometer2"></i>
+                        Dashboard
+                    </a>
+                </li>
+
+                {% if request.user.user_type == 'teacher' and teacher_primary_class %}
+                <li class="nav-item nav-group">
+                    <button class="nav-link group-toggle btn btn-link text-start p-0" type="button" data-bs-toggle="collapse" data-bs-target="#myClassGroup" aria-expanded="true">
+                        <span><i class="bi bi-door-open"></i> My Class</span>
+                        <i class="bi bi-chevron-down"></i>
+                    </button>
+                    <div class="collapse show nav-submenu" id="myClassGroup">
+                        <a class="nav-link {% if 'students' in request.path %}active{% endif %}" href="{% url 'frontend:student_list' %}?class={{ teacher_primary_class.pk }}">Students</a>
+                        <a class="nav-link {% if 'attendance' in request.path %}active{% endif %}" href="{% url 'frontend:attendance_list' %}?class={{ teacher_primary_class.pk }}">Attendance</a>
+                        <a class="nav-link {% if 'timetable' in request.path %}active{% endif %}" href="{% url 'frontend:timetable' %}?class={{ teacher_primary_class.pk }}">Timetable</a>
+                        <a class="nav-link {% if 'academics/exams' in request.path %}active{% endif %}" href="{% url 'frontend:exam_list' %}?class={{ teacher_primary_class.pk }}">Exams</a>
+                        <a class="nav-link {% if 'academics/calendar' in request.path %}active{% endif %}" href="{% url 'frontend:calendar' %}?class={{ teacher_primary_class.pk }}">Calendar</a>
+                    </div>
+                </li>
+                {% endif %}
+
+                {% if request.user.is_superuser or request.user.user_type == 'manager' or request.user.user_type == 'admin' or request.user.user_type == 'head_teacher' or request.user.user_type == 'teacher' %}
+                <li class="nav-item nav-group">
+                    <button class="nav-link group-toggle btn btn-link text-start p-0" type="button" data-bs-toggle="collapse" data-bs-target="#academicGroup" aria-expanded="true">
+                        <span><i class="bi bi-book"></i> Academics</span>
+                        <i class="bi bi-chevron-down"></i>
+                    </button>
+                    <div class="collapse show nav-submenu" id="academicGroup">
+                        <a class="nav-link {% if 'academics/exams' in request.path %}active{% endif %}" href="{% url 'frontend:exam_list' %}">Exams</a>
+                        <a class="nav-link {% if 'academics/results' in request.path %}active{% endif %}" href="{% url 'frontend:result_list' %}">Results</a>
+                        <a class="nav-link {% if 'attendance' in request.path %}active{% endif %}" href="{% url 'frontend:attendance_list' %}">Attendance</a>
+                        <a class="nav-link {% if 'academics/timetable' in request.path or 'timetable' in request.path %}active{% endif %}" href="{% url 'frontend:timetable' %}">Timetable</a>
+                        <a class="nav-link {% if 'academics/calendar' in request.path or 'calendar' in request.path %}active{% endif %}" href="{% url 'frontend:calendar' %}">Calendar</a>
+                    </div>
+                </li>
+
+                <li class="nav-item nav-group">
+                    <button class="nav-link group-toggle btn btn-link text-start p-0" type="button" data-bs-toggle="collapse" data-bs-target="#studentGroup" aria-expanded="true">
+                        <span><i class="bi bi-people"></i> Students</span>
+                        <i class="bi bi-chevron-down"></i>
+                    </button>
+                    <div class="collapse show nav-submenu" id="studentGroup">
+                        <a class="nav-link {% if 'students/' == request.path|slice:':10' %}active{% endif %}" href="{% url 'frontend:student_list' %}">All Students</a>
+                        {% if request.user.user_type == 'teacher' %}
+                        <a class="nav-link {% if 'students/transfer' in request.path %}active{% endif %}" href="{% url 'frontend:student_transfer' %}">Request Transfer</a>
+                        {% else %}
+                        <a class="nav-link {% if 'students/register' in request.path %}active{% endif %}" href="{% url 'frontend:student_register' %}">Add Student</a>
+                        <a class="nav-link {% if 'students/promote' in request.path %}active{% endif %}" href="{% url 'frontend:student_promote' %}">Promotions</a>
+                        <a class="nav-link {% if 'students/transfer' in request.path %}active{% endif %}" href="{% url 'frontend:student_transfer' %}">Transfers</a>
+                        {% endif %}
+                    </div>
+                </li>
+                {% endif %}
+
+                {% if request.user.is_superuser or request.user.user_type == 'manager' or request.user.user_type == 'admin' %}
+                <li class="nav-item nav-group">
+                    <button class="nav-link group-toggle btn btn-link text-start p-0" type="button" data-bs-toggle="collapse" data-bs-target="#financeGroup" aria-expanded="true">
+                        <span><i class="bi bi-currency-dollar"></i> Finance</span>
+                        <i class="bi bi-chevron-down"></i>
+                    </button>
+                    <div class="collapse show nav-submenu" id="financeGroup">
+                        <!-- Student Finance Section -->
+                        <div class="nav-section-label">Student Finance</div>
+                        <a class="nav-link {% if 'finance/invoices' in request.path %}active{% endif %}" href="{% url 'frontend:invoice_list' %}">Invoices</a>
+                        <a class="nav-link {% if 'finance/payments' in request.path %}active{% endif %}" href="{% url 'frontend:payment_list' %}">Payments</a>
+                        <a class="nav-link {% if 'finance/fee-structures' in request.path %}active{% endif %}" href="{% url 'frontend:fee_structure_list' %}">Fee Structures</a>
+                        <a class="nav-link {% if 'finance/accounts' in request.path %}active{% endif %}" href="{% url 'frontend:accounts_list' %}">Accounts</a>
+                        
+                        <!-- Company Finance Section -->
+                        <div class="nav-section-label">Company Finance</div>
+                        <a class="nav-link {% if 'financial' in request.path %}active{% endif %}" href="{% url 'frontend:financial_overview' %}">Financial Overview</a>
+                        <a class="nav-link {% if 'financial/income' in request.path %}active{% endif %}" href="{% url 'frontend:income_list' %}">Income</a>
+                        <a class="nav-link {% if 'financial/expenses' in request.path %}active{% endif %}" href="{% url 'frontend:expense_list' %}">Expenses</a>
+                        <a class="nav-link {% if 'financial/salaries' in request.path %}active{% endif %}" href="{% url 'frontend:salary_list' %}">Salaries</a>
+                        <a class="nav-link {% if 'financial/reports' in request.path %}active{% endif %}" href="{% url 'frontend:financial_reports' %}">Reports</a>
+                    </div>
+                </li>
+
+                <li class="nav-item nav-group">
+                    <button class="nav-link group-toggle btn btn-link text-start p-0" type="button" data-bs-toggle="collapse" data-bs-target="#staffGroup" aria-expanded="true">
+                        <span><i class="bi bi-person-badge"></i> Employees</span>
+                        <i class="bi bi-chevron-down"></i>
+                    </button>
+                    <div class="collapse show nav-submenu" id="staffGroup">
+                        <a class="nav-link {% if 'staff/' in request.path %}active{% endif %}" href="{% url 'frontend:staff_list' %}">All Staff</a>
+                        <a class="nav-link {% if 'staff/add' in request.path %}active{% endif %}" href="{% url 'frontend:staff_add' %}">Add Staff</a>
+                        <a class="nav-link {% if 'analytics' in request.path %}active{% endif %}" href="{% url 'frontend:analytics_dashboard' %}">Analytics</a>
+                    </div>
+                </li>
+
+                <li class="nav-item nav-group">
+                    <button class="nav-link group-toggle btn btn-link text-start p-0" type="button" data-bs-toggle="collapse" data-bs-target="#operationsGroup" aria-expanded="true">
+                        <span><i class="bi bi-gear"></i> Operations</span>
+                        <i class="bi bi-chevron-down"></i>
+                    </button>
+                    <div class="collapse show nav-submenu" id="operationsGroup">
+                        <a class="nav-link" href="{% url 'frontend:analytics_dashboard' %}">Analytics</a>
+                        <a class="nav-link {% if 'sync' in request.path %}active{% endif %}" href="{% url 'frontend:sync_dashboard' %}">Sync</a>
+                    </div>
+                </li>
+                {% endif %}
+
+                {% if request.user.is_superuser or request.user.user_type == 'manager' or request.user.user_type == 'admin' or request.user.user_type == 'head_teacher' %}
+                <li class="nav-item nav-group">
+                    <button class="nav-link group-toggle btn btn-link text-start p-0" type="button" data-bs-toggle="collapse" data-bs-target="#communicationGroup" aria-expanded="true">
+                        <span><i class="bi bi-megaphone"></i> Communication</span>
+                        <i class="bi bi-chevron-down"></i>
+                    </button>
+                    <div class="collapse show nav-submenu" id="communicationGroup">
+                        <a class="nav-link {% if 'communication/announcements' in request.path %}active{% endif %}" href="{% url 'communication:announcement_list' %}">Announcements</a>
+                    </div>
+                    {% endif %}
+
+                
+
+                    {% if request.user.user_type == 'teacher' %}
+                    </button>
+                    <div class="collapse show nav-submenu" id="teacherCommunicationGroup">
+                        <a class="nav-link {% if 'communication/teacher' in request.path %}active{% endif %}" href="{% url 'frontend:teacher_communication_hub' %}">Parent Communication</a>
+                        <a class="nav-link {% if 'notifications' in request.path %}active{% endif %}" href="{% url 'frontend:notifications' %}">Notifications</a>
+                    </div>
+                </li>
+                {% endif %}
+
+                {% if request.user.is_superuser or request.user.user_type == 'manager' or request.user.user_type == 'admin' %}
+                <li class="nav-item">
+                    <a class="nav-link {% if 'manager/approvals' in request.path %}active{% endif %}" href="{% url 'frontend:manager_approvals' %}" style="background-color: #0d4c8b; border-left: 4px solid #0d6efd; font-weight: 600;">
+                        <i class="bi bi-check-circle"></i>
+                        Approvals
+                        {% if pending_notifications_count %}
+                        <span class="badge bg-danger rounded-pill ms-2">{{ pending_notifications_count }}</span>
+                        {% endif %}
+                    </a>
+                </li>
+                {% endif %}
+
+                <li class="nav-item mt-3">
+                    <form method="POST" action="{% url 'logout' %}" style="margin: 0;">
+                        {% csrf_token %}
+                        <button type="submit" class="nav-link" style="background: none; border: none; width: 100%; text-align: left; cursor: pointer;">
+                            <i class="bi bi-box-arrow-right"></i>
+                            Logout
+                        </button>
+                    </form>
+                </li>
+            </ul>
+        </nav>
+    </aside>
+
+    <div class="sidebar-backdrop" id="sidebarBackdrop" aria-hidden="true"></div>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+        <!-- Top Navigation Bar -->
+        <div class="top-navbar">
+            <div class="d-flex justify-content-between align-items-center gap-3">
+                <div class="d-flex align-items-center flex-grow-1">
+                    <button id="mobileMenuToggle" class="btn btn-outline-primary me-3 d-inline-flex d-lg-none mobile-menu-toggle-inline" type="button" aria-label="Open navigation menu" aria-controls="sidebar" aria-expanded="false">
+                        <i class="bi bi-list"></i>
+                    </button>
+                    <button id="pageBackBtnFrontend" class="btn btn-outline-primary me-3 d-none" title="Go back">
+                        <i class="bi bi-arrow-left"></i>
+                    </button>
+                    <div class="welcome-text">
+                        {% block page_title %}Welcome{% endblock %}
+                        <nav aria-label="breadcrumb">
+                            {% block breadcrumb %}{% endblock %}
+                        </nav>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-3 flex-shrink-0">
+                    {% if request.user.user_type == 'manager' or request.user.user_type == 'admin' %}
+                        <a href="{% url 'frontend:manager_approvals' %}" class="text-decoration-none" title="Pending Approvals">
+                            <i class="bi bi-check-circle" style="font-size: 1.25rem; color: #dc3545;"></i>
+                            {% if pending_notifications_count %}
+                            <span class="badge bg-danger rounded-pill" style="position: relative; right: 8px; top: -5px; font-size: 0.75rem;">{{ pending_notifications_count }}</span>
+                            {% endif %}
+                        </a>
+                    {% endif %}
+                    <a href="{% url 'frontend:notifications' %}" class="text-decoration-none text-primary" title="Notifications">
+                        <i class="bi bi-bell" style="font-size: 1.25rem;"></i>
+                    </a>
+                    <span class="text-muted d-none d-sm-inline-flex align-items-center gap-2">
+                        <i class="bi bi-calendar3"></i>
+                        {{ today|date:"l, F d, Y" }}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content Area -->
+        <div class="page-container">
+            <!-- Django Messages -->
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+    </div>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        (function() {
+            const sidebar = document.getElementById('sidebar');
+            const sidebarBackdrop = document.getElementById('sidebarBackdrop');
+            const collapseToggle = document.getElementById('sidebarCollapseToggle');
+            const mobileToggle = document.getElementById('mobileMenuToggle');
+            const storageKey = 'jdsSidebarCollapsed';
+            const groupToggleSelector = '.nav-group > .group-toggle';
+
+            function setMobileSidebarState(isOpen) {
+                sidebar.classList.toggle('show', isOpen);
+                sidebarBackdrop?.classList.toggle('show', isOpen);
+                mobileToggle?.setAttribute('aria-expanded', String(isOpen));
+                document.body.classList.toggle('sidebar-open', isOpen);
+            }
+
+            function closeFloatingGroups() {
+                sidebar.querySelectorAll('.nav-submenu.floating-open').forEach((submenu) => {
+                    submenu.classList.remove('floating-open');
+                    submenu.style.top = '';
+                });
+            }
+
+            function positionFloatingSubmenu(toggleButton, submenu) {
+                const sidebarRect = sidebar.getBoundingClientRect();
+                const buttonRect = toggleButton.getBoundingClientRect();
+                const topOffset = buttonRect.top - sidebarRect.top;
+
+                submenu.style.top = `${topOffset}px`;
+                submenu.style.left = `${sidebarRect.width + 12}px`;
+            }
+
+            function refreshGroupActiveState() {
+                sidebar.querySelectorAll('.nav-group').forEach((group) => {
+                    const hasActiveChild = Boolean(group.querySelector('.nav-submenu .nav-link.active'));
+                    group.classList.toggle('child-active', hasActiveChild);
+                });
+            }
+
+            function updateSidebarTooltips() {
+                const links = sidebar.querySelectorAll('.nav-link');
+                links.forEach((link) => {
+                    if (!link.dataset.originalTitle) {
+                        link.dataset.originalTitle = link.textContent.replace(/\s+/g, ' ').trim();
+                    }
+
+                    if (sidebar.classList.contains('sidebar-collapsed')) {
+                        link.setAttribute('title', link.dataset.originalTitle);
+                        link.setAttribute('data-bs-toggle', 'tooltip');
+                        link.setAttribute('data-bs-placement', 'right');
+                    } else {
+                        link.removeAttribute('title');
+                        link.removeAttribute('data-bs-toggle');
+                        link.removeAttribute('data-bs-placement');
+                    }
+                });
+
+                document.querySelectorAll('.tooltip').forEach((tooltipEl) => tooltipEl.remove());
+                const tooltipEls = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                tooltipEls.forEach((el) => new bootstrap.Tooltip(el));
+            }
+
+            function wireCollapsedGroupBehavior() {
+                const isCollapsed = sidebar.classList.contains('sidebar-collapsed');
+
+                sidebar.querySelectorAll(groupToggleSelector).forEach((toggleButton) => {
+                    const submenuSelector = toggleButton.getAttribute('data-bs-target');
+                    const submenu = submenuSelector ? sidebar.querySelector(submenuSelector) : null;
+
+                    if (!submenu) {
+                        return;
+                    }
+
+                    if (toggleButton.dataset.sidebarWired === '1') {
+                        submenu.classList.toggle('floating-open', isCollapsed && submenu.classList.contains('floating-open'));
+                        return;
+                    }
+
+                    toggleButton.dataset.sidebarWired = '1';
+
+                    toggleButton.setAttribute('aria-expanded', String(submenu.classList.contains('show')));
+
+                    if (!isCollapsed) {
+                        submenu.classList.remove('floating-open');
+                        submenu.style.top = '';
+                        submenu.style.left = '';
+                        return;
+                    }
+
+                    const openMenu = () => {
+                        closeFloatingGroups();
+                        positionFloatingSubmenu(toggleButton, submenu);
+                        submenu.classList.add('floating-open');
+                        toggleButton.setAttribute('aria-expanded', 'true');
+                    };
+
+                    const closeMenu = () => {
+                        submenu.classList.remove('floating-open');
+                        submenu.style.top = '';
+                        submenu.style.left = '';
+                        toggleButton.setAttribute('aria-expanded', 'false');
+                    };
+
+                    toggleButton.addEventListener('mouseenter', openMenu);
+                    toggleButton.addEventListener('focus', openMenu);
+                    toggleButton.addEventListener('click', function(event) {
+                        if (!sidebar.classList.contains('sidebar-collapsed')) {
+                            return;
+                        }
+
+                        event.preventDefault();
+                        event.stopPropagation();
+                        const isOpen = submenu.classList.contains('floating-open');
+                        if (isOpen) {
+                            closeMenu();
+                        } else {
+                            openMenu();
+                        }
+                    });
+
+                    toggleButton.addEventListener('mouseleave', function() {
+                        if (!sidebar.classList.contains('sidebar-collapsed')) {
+                            return;
+                        }
+
+                        window.setTimeout(() => {
+                            if (!submenu.matches(':hover') && !toggleButton.matches(':hover')) {
+                                closeMenu();
+                            }
+                        }, 120);
+                    });
+
+                    submenu.addEventListener('mouseleave', closeMenu);
+                    submenu.addEventListener('focusout', function() {
+                        window.setTimeout(() => {
+                            if (!submenu.contains(document.activeElement) && !toggleButton.contains(document.activeElement)) {
+                                closeMenu();
+                            }
+                        }, 0);
+                    });
+                });
+            }
+
+            function setCollapsedState(isCollapsed) {
+                if (window.innerWidth <= 768) {
+                    return;
+                }
+
+                sidebar.classList.toggle('sidebar-collapsed', isCollapsed);
+                if (collapseToggle) {
+                    collapseToggle.setAttribute('aria-expanded', String(!isCollapsed));
+                }
+                localStorage.setItem(storageKey, isCollapsed ? '1' : '0');
+                updateSidebarTooltips();
+                refreshGroupActiveState();
+                wireCollapsedGroupBehavior();
+                if (!isCollapsed) {
+                    closeFloatingGroups();
+                }
+            }
+
+            const savedState = localStorage.getItem(storageKey) === '1';
+            setCollapsedState(savedState);
+            refreshGroupActiveState();
+            wireCollapsedGroupBehavior();
+
+            collapseToggle?.addEventListener('click', function() {
+                setCollapsedState(!sidebar.classList.contains('sidebar-collapsed'));
+            });
+
+            document.addEventListener('keydown', function(event) {
+                const isModifier = event.ctrlKey || event.metaKey;
+                const keyPressed = event.key && event.key.toLowerCase() === 'b';
+                const activeTag = document.activeElement ? document.activeElement.tagName : '';
+                const isTyping = activeTag === 'INPUT' || activeTag === 'TEXTAREA' || activeTag === 'SELECT' || document.activeElement?.isContentEditable;
+
+                if (isModifier && keyPressed && !isTyping && window.innerWidth > 768) {
+                    event.preventDefault();
+                    setCollapsedState(!sidebar.classList.contains('sidebar-collapsed'));
+                }
+            });
+
+            mobileToggle?.addEventListener('click', function() {
+                setMobileSidebarState(!sidebar.classList.contains('show'));
+            });
+
+            sidebarBackdrop?.addEventListener('click', function() {
+                setMobileSidebarState(false);
+            });
+
+            document.addEventListener('click', function(event) {
+                if (window.innerWidth <= 768 &&
+                    sidebar.classList.contains('show') &&
+                    !sidebar.contains(event.target) &&
+                    mobileToggle &&
+                    !mobileToggle.contains(event.target)) {
+                    setMobileSidebarState(false);
+                }
+            });
+
+            sidebar.querySelectorAll('a.nav-link').forEach((link) => {
+                link.addEventListener('click', function() {
+                    if (window.innerWidth <= 768) {
+                        setMobileSidebarState(false);
+                    }
+                });
+            });
+
+            function annotateResponsiveTables() {
+                document.querySelectorAll('.table-responsive table').forEach((table) => {
+                    const headerCells = Array.from(table.querySelectorAll('thead th'));
+                    table.querySelectorAll('tbody tr').forEach((row) => {
+                        Array.from(row.children).forEach((cell, index) => {
+                            if (cell.tagName !== 'TD') {
+                                return;
+                            }
+
+                            if (!cell.dataset.label) {
+                                const headerText = headerCells[index] ? headerCells[index].textContent : '';
+                                cell.dataset.label = (headerText || '').replace(/\s+/g, ' ').trim();
+                            }
+                        });
+                    });
+                });
+            }
+
+            annotateResponsiveTables();
+
+            window.addEventListener('resize', function() {
+                if (window.innerWidth <= 768) {
+                    sidebar.classList.remove('sidebar-collapsed');
+                    closeFloatingGroups();
+                    setMobileSidebarState(false);
+                } else {
+                    sidebar.classList.remove('show');
+                    sidebarBackdrop?.classList.remove('show');
+                    document.body.classList.remove('sidebar-open');
+                    setCollapsedState(localStorage.getItem(storageKey) === '1');
+                }
+            });
+
+            document.addEventListener('click', function(event) {
+                if (!sidebar.contains(event.target)) {
+                    closeFloatingGroups();
+                }
+            });
+        })();
+    </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

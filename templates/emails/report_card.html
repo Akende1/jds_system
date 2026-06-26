@@ -1,0 +1,41 @@
+{% extends "emails/base_email.html" %}
+
+{% block content %}
+<div class="header">
+    <h1>Report Card</h1>
+</div>
+
+<div class="content">
+    <p>Dear Parent/Guardian,</p>
+    
+    <p>The report card for <strong>{{ student_name }}</strong> is now available.</p>
+    
+    <table class="info-table">
+        <tr>
+            <td>Student Name:</td>
+            <td>{{ student_name }}</td>
+        </tr>
+        <tr>
+            <td>Class:</td>
+            <td>{{ class }}</td>
+        </tr>
+        <tr>
+            <td>Academic Year:</td>
+            <td>{{ academic_year }}</td>
+        </tr>
+        <tr>
+            <td>Term:</td>
+            <td>{{ term }}</td>
+        </tr>
+    </table>
+    
+    <p>You can collect the physical report card from the school office or view it online through the parent portal.</p>
+    
+    <p>We encourage you to review your child's progress and discuss any areas that may need improvement. If you have any concerns or would like to schedule a meeting with the class teacher, please contact the school.</p>
+    
+    <p>Thank you for your continued support in your child's education.</p>
+    
+    <p>Best regards,<br>
+    <strong>Academic Department</strong></p>
+</div>
+{% endblock %}

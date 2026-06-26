@@ -1,0 +1,43 @@
+{% extends "emails/base_email.html" %}
+
+{% block content %}
+<div class="header">
+    <h1>Absence Notification</h1>
+</div>
+
+<div class="content">
+    <p>Dear Parent/Guardian,</p>
+    
+    <p>This is to inform you that <strong>{{ student_name }}</strong> was marked absent on {{ date|date:"F d, Y" }}.</p>
+    
+    <table class="info-table">
+        <tr>
+            <td>Student Name:</td>
+            <td>{{ student_name }}</td>
+        </tr>
+        <tr>
+            <td>Date:</td>
+            <td>{{ date|date:"l, F d, Y" }}</td>
+        </tr>
+        <tr>
+            <td>Status:</td>
+            <td><strong>{{ status }}</strong></td>
+        </tr>
+        <tr>
+            <td>Remarks:</td>
+            <td>{{ remarks }}</td>
+        </tr>
+    </table>
+    
+    <div class="alert">
+        <strong>Important:</strong> If this absence was unexpected or you are unaware of the reason, please contact the school immediately.
+    </div>
+    
+    <p>Regular attendance is important for your child's academic success. If your child was absent due to illness or any valid reason, please provide appropriate documentation.</p>
+    
+    <p>If you have any questions or concerns, please do not hesitate to contact us.</p>
+    
+    <p>Best regards,<br>
+    <strong>School Administration</strong></p>
+</div>
+{% endblock %}

@@ -1,0 +1,175 @@
+{% extends 'base_frontend.html' %}
+
+{% block title %}Head Teacher Dashboard - School Management System{% endblock %}
+
+{% block page_title %}Head Teacher Dashboard{% endblock %}
+
+{% block content %}
+<div class="row g-4 mb-4">
+    <!-- Today's Attendance -->
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="stat-icon" style="background: rgba(25, 135, 84, 0.1); color: #198754;">
+                    <i class="bi bi-check-circle"></i>
+                </div>
+                <div class="stat-value">{{ attendance.present }}</div>
+                <div class="stat-label">Students Present Today</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="stat-icon" style="background: rgba(220, 53, 69, 0.1); color: #dc3545;">
+                    <i class="bi bi-x-circle"></i>
+                </div>
+                <div class="stat-value">{{ attendance.absent }}</div>
+                <div class="stat-label">Students Absent</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="stat-icon" style="background: rgba(13, 110, 253, 0.1); color: #0d6efd;">
+                    <i class="bi bi-percent"></i>
+                </div>
+                <div class="stat-value">{{ attendance.rate|floatformat:1 }}%</div>
+                <div class="stat-label">Attendance Rate</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="stat-icon" style="background: rgba(255, 193, 7, 0.1); color: #ffc107;">
+                    <i class="bi bi-calendar-event"></i>
+                </div>
+                <div class="stat-value">{{ upcoming_exams|length }}</div>
+                <div class="stat-label">Upcoming Exams</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-8">
+        <div class="card data-table">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Class Performance</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Class</th>
+                                <th>Students</th>
+                                <th>Average Score</th>
+                                <th>Performance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for perf in class_performance %}
+                            <tr>
+                                <td><strong>{{ perf.class_name }}</strong></td>
+                                <td>{{ perf.student_count }}</td>
+                                <td>{{ perf.avg_score|floatformat:1 }}%</td>
+                                <td>
+                                    {% if perf.avg_score >= 75 %}
+                                        <span class="badge bg-success">Excellent</span>
+                                    {% elif perf.avg_score >= 60 %}
+                                        <span class="badge bg-info">Good</span>
+                                    {% elif perf.avg_score >= 50 %}
+                                        <span class="badge bg-warning">Average</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Needs Attention</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-4">No performance data available</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Upcoming Exams</h5>
+            </div>
+            <div class="card-body">
+                {% for exam in upcoming_exams %}
+                <div class="mb-3 p-3" style="background: #f8f9fa; border-radius: 0.5rem;">
+                    <div class="fw-bold">{{ exam.exam_name }}</div>
+                    <div class="text-muted small">{{ exam.subject.name }}</div>
+                    <div class="text-primary small mt-1">
+                        <i class="bi bi-calendar"></i> {{ exam.exam_date|date:"M d, Y" }}
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-muted text-center py-3">No upcoming exams</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mt-2">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Absent Teachers Today</h5>
+            </div>
+            <div class="card-body">
+                {% if absent_teachers %}
+                    {% for teacher in absent_teachers %}
+                    <div class="d-flex align-items-center mb-2 p-2" style="background: #fff3cd; border-radius: 0.5rem;">
+                        <i class="bi bi-person-x me-2"></i>
+                        <div>{{ teacher.get_full_name }}</div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                <p class="text-center text-success mb-0">
+                    <i class="bi bi-check-circle" style="font-size: 2rem;"></i><br>
+                    All teachers present
+                </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Recent Discipline Incidents</h5>
+            </div>
+            <div class="card-body">
+                {% if incidents %}
+                    {% for incident in incidents %}
+                    <div class="mb-2 p-2" style="background: #f8d7da; border-radius: 0.5rem;">
+                        <div class="fw-bold">{{ incident.student.get_full_name }}</div>
+                        <div class="small text-muted">{{ incident.date|date:"M d" }} - {{ incident.incident_type }}</div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                <p class="text-center text-success mb-0">
+                    <i class="bi bi-check-circle" style="font-size: 2rem;"></i><br>
+                    No recent incidents
+                </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

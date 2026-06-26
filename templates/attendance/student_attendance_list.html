@@ -1,0 +1,119 @@
+{% extends 'base_frontend.html' %}
+
+{% block title %}Student Attendance - JDS Management{% endblock %}
+
+{% block page_title %}
+<i class="bi bi-calendar-check text-primary"></i> Student Attendance
+{% endblock %}
+
+{% block breadcrumb %}
+<ol class="breadcrumb breadcrumb-custom mb-0">
+    <li class="breadcrumb-item"><a href="{% url 'frontend:dashboard' %}">Dashboard</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Attendance</li>
+</ol>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <!-- Title and breadcrumb now handled in base template -->
+        </div>
+        <div>
+            <a href="{% url 'frontend:attendance_mark' %}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Mark Attendance
+            </a>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Date</label>
+                    <input type="date" name="date" class="form-control" value="{{ selected_date|date:'Y-m-d' }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Class</label>
+                    <select name="class" class="form-select">
+                        <option value="">All Classes</option>
+                        {% for class in classes %}
+                        <option value="{{ class.id }}" {% if request.GET.class == class.id|stringformat:"s" %}selected{% endif %}>
+                            {{ class.grade.name }} - {{ class.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-funnel"></i> Filter
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Attendance Records -->
+    <div class="card">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">Attendance Records</h5>
+        </div>
+        <div class="card-body">
+            {% if attendance %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Student</th>
+                            <th>Class</th>
+                            <th>Status</th>
+                            <th>Time In</th>
+                            <th>Time Out</th>
+                            <th>Remarks</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for record in attendance %}
+                        <tr>
+                            <td>{{ record.date|date:"M d, Y" }}</td>
+                            <td>
+                                <a href="{% url 'frontend:student_detail' record.student.id %}">
+                                    {{ record.student.get_full_name }}
+                                </a>
+                            </td>
+                            <td>{{ record.classroom.grade.name }} - {{ record.classroom.name }}</td>
+                            <td>
+                                {% if record.status == 'present' %}
+                                <span class="badge bg-success">Present</span>
+                                {% elif record.status == 'absent' %}
+                                <span class="badge bg-danger">Absent</span>
+                                {% elif record.status == 'late' %}
+                                <span class="badge bg-warning">Late</span>
+                                {% elif record.status == 'excused' %}
+                                <span class="badge bg-info">Excused</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ record.time_in|time:"g:i A"|default:"-" }}</td>
+                            <td>{{ record.time_out|time:"g:i A"|default:"-" }}</td>
+                            <td>{{ record.remarks|default:"-" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-calendar-x text-muted" style="font-size: 3rem;"></i>
+                <p class="text-muted mt-3">No attendance records found for the selected date and class.</p>
+                <a href="{% url 'frontend:attendance_mark' %}" class="btn btn-primary mt-2">
+                    Mark Attendance
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

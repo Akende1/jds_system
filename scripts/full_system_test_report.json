@@ -1,0 +1,104 @@
+{
+  "auth_roles": {
+    "status": "ok",
+    "details": {
+      "admin": "admin",
+      "admin_root_status": 200,
+      "admin_approvals_status": 200,
+      "manager": "Manager",
+      "manager_root_status": 200,
+      "manager_approvals_status": 200,
+      "head_teacher": "HeadTeacher",
+      "head_teacher_root_status": 200,
+      "head_teacher_approvals_status": 302,
+      "teacher": "Teacher",
+      "teacher_root_status": 200,
+      "teacher_approvals_status": 302,
+      "auxiliary": "Auxilery",
+      "auxiliary_root_status": 200,
+      "auxiliary_approvals_status": 302,
+      "parent": "Parent",
+      "parent_root_status": 200,
+      "parent_approvals_status": 302,
+      "student": "Student",
+      "student_root_status": 200,
+      "student_approvals_status": 302
+    }
+  },
+  "approval_workflow": {
+    "status": "error",
+    "error": "Cannot assign \"<User: Teacher User (Teacher)>\": \"RestockingRequest.staff\" must be a \"Staff\" instance.",
+    "trace": "Traceback (most recent call last):\n  File \"C:\\Users\\rival\\Documents\\jds_system\\scripts\\run_full_system_tests.py\", line 26, in run_test\n    res = fn()\n  File \"C:\\Users\\rival\\Documents\\jds_system\\scripts\\run_full_system_tests.py\", line 59, in test_approval_workflow\n    rr = RestockingRequest.objects.create(\n        staff=staff,\n    ...<3 lines>...\n        status='pending'\n    )\n  File \"C:\\Users\\rival\\Documents\\jds_system\\venv\\Lib\\site-packages\\django\\db\\models\\manager.py\", line 87, in manager_method\n    return getattr(self.get_queryset(), name)(*args, **kwargs)\n           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\rival\\Documents\\jds_system\\venv\\Lib\\site-packages\\django\\db\\models\\query.py\", line 667, in create\n    obj = self.model(**kwargs)\n  File \"C:\\Users\\rival\\Documents\\jds_system\\venv\\Lib\\site-packages\\django\\db\\models\\base.py\", line 566, in __init__\n    _setattr(self, field.name, rel_obj)\n    ~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\rival\\Documents\\jds_system\\venv\\Lib\\site-packages\\django\\db\\models\\fields\\related_descriptors.py\", line 287, in __set__\n    raise ValueError(\n    ...<7 lines>...\n    )\nValueError: Cannot assign \"<User: Teacher User (Teacher)>\": \"RestockingRequest.staff\" must be a \"Staff\" instance.\n"
+  },
+  "timetable_validation": {
+    "status": "error",
+    "error": "{'classroom': ['This class already has a lesson scheduled at this time.'], 'teacher': ['This teacher is already booked at this time.']}",
+    "trace": "Traceback (most recent call last):\n  File \"C:\\Users\\rival\\Documents\\jds_system\\scripts\\run_full_system_tests.py\", line 26, in run_test\n    res = fn()\n  File \"C:\\Users\\rival\\Documents\\jds_system\\scripts\\run_full_system_tests.py\", line 88, in test_timetable_validation\n    t1 = Timetable.objects.create(classroom=cls, subject=sub, teacher=teacher, academic_year=year, term=term, day_of_week='monday', start_time='08:00', end_time='08:40', room='A1')\n  File \"C:\\Users\\rival\\Documents\\jds_system\\venv\\Lib\\site-packages\\django\\db\\models\\manager.py\", line 87, in manager_method\n    return getattr(self.get_queryset(), name)(*args, **kwargs)\n           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\rival\\Documents\\jds_system\\venv\\Lib\\site-packages\\django\\db\\models\\query.py\", line 669, in create\n    obj.save(force_insert=True, using=self.db)\n    ~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\rival\\Documents\\jds_system\\scripts\\..\\backend\\academics\\models.py\", line 352, in save\n    self.full_clean()\n    ~~~~~~~~~~~~~~~^^\n  File \"C:\\Users\\rival\\Documents\\jds_system\\venv\\Lib\\site-packages\\django\\db\\models\\base.py\", line 1710, in full_clean\n    raise ValidationError(errors)\ndjango.core.exceptions.ValidationError: {'classroom': ['This class already has a lesson scheduled at this time.'], 'teacher': ['This teacher is already booked at this time.']}\n"
+  },
+  "finance_flow": {
+    "status": "ok",
+    "details": {
+      "initial_partial": true,
+      "final_status": "paid",
+      "balance": "0.00"
+    }
+  },
+  "academics_flow": {
+    "status": "ok",
+    "details": {
+      "exam_created": 2,
+      "result_created": 2
+    }
+  },
+  "attendance": {
+    "status": "error",
+    "error": "UNIQUE constraint failed: attendance_studentattendance.student_id, attendance_studentattendance.date",
+    "trace": "Traceback (most recent call last):\n  File \"C:\\Users\\rival\\Documents\\jds_system\\venv\\Lib\\site-packages\\django\\db\\backends\\utils.py\", line 105, in _execute\n    return self.cursor.execute(sql, params)\n           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^\n  File \"C:\\Users\\rival\\Documents\\jds_system\\venv\\Lib\\site-packages\\django\\db\\backends\\sqlite3\\base.py\", line 359, in execute\n    return super().execute(query, params)\n           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^\nsqlite3.IntegrityError: UNIQUE constraint failed: attendance_studentattendance.student_id, attendance_studentattendance.date\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"C:\\Users\\rival\\Documents\\jds_system\\scripts\\run_full_system_tests.py\", line 26, in run_test\n    res = fn()\n  File \"C:\\Users\\rival\\Documents\\jds_system\\scripts\\run_full_system_tests.py\", line 143, in test_attendance\n    att = StudentAttendance.objects.create(student=student, date=timezone.now().date(), status='present', classroom=cls)\n  File \"C:\\Users\\rival\\Documents\\jds_system\\venv\\Lib\\site-packages\\django\\db\\models\\manager.py\", line 87, in manager_method\n    return getattr(self.get_queryset(), name)(*args, **kwargs)\n           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\rival\\Documents\\jds_system\\venv\\Lib\\site-packages\\django\\db\\models\\query.py\", line 669, in create\n    obj.save(force_insert=True, using=self.db)\n    ~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\rival\\Documents\\jds_system\\venv\\Lib\\site-packages\\django\\db\\models\\base.py\", line 874, in save\n    self.save_base(\n    ~~~~~~~~~~~~~~^\n        using=using,\n        ^^^^^^^^^^^^\n    ...<2 lines>...\n        update_fields=update_fields,\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"C:\\Users\\rival\\Documents\\jds_system\\venv\\Lib\\site-packages\\django\\db\\models\\base.py\", line 966, in save_base\n    updated = self._save_table(\n        raw,\n    ...<4 lines>...\n        update_fields,\n    )\n  File \"C:\\Users\\rival\\Documents\\jds_system\\venv\\Lib\\site-packages\\django\\db\\models\\base.py\", line 1167, in _save_table\n    results = self._do_insert(\n        cls._base_manager, using, insert_fields, returning_fields, raw\n    )\n  File \"C:\\Users\\rival\\Documents\\jds_system\\venv\\Lib\\site-packages\\django\\db\\models\\base.py\", line 1218, in _do_insert\n    return manager._insert(\n           ~~~~~~~~~~~~~~~^\n        [self],\n        ^^^^^^^\n    ...<3 lines>...\n        raw=raw,\n        ^^^^^^^^\n    )\n    ^\n  File \"C:\\Users\\rival\\Documents\\jds_system\\venv\\Lib\\site-packages\\django\\db\\models\\manager.py\", line 87, in manager_method\n    return getattr(self.get_queryset(), name)(*args, **kwargs)\n           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\rival\\Documents\\jds_system\\venv\\Lib\\site-packages\\django\\db\\models\\query.py\", line 1918, in _insert\n    return query.get_compiler(using=using).execute_sql(returning_fields)\n           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\rival\\Documents\\jds_system\\venv\\Lib\\site-packages\\django\\db\\models\\sql\\compiler.py\", line 1925, in execute_sql\n    cursor.execute(sql, params)\n    ~~~~~~~~~~~~~~^^^^^^^^^^^^^\n  File \"C:\\Users\\rival\\Documents\\jds_system\\venv\\Lib\\site-packages\\django\\db\\backends\\utils.py\", line 122, in execute\n    return super().execute(sql, params)\n           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^\n  File \"C:\\Users\\rival\\Documents\\jds_system\\venv\\Lib\\site-packages\\django\\db\\backends\\utils.py\", line 79, in execute\n    return self._execute_with_wrappers(\n           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^\n        sql, params, many=False, executor=self._execute\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"C:\\Users\\rival\\Documents\\jds_system\\venv\\Lib\\site-packages\\django\\db\\backends\\utils.py\", line 92, in _execute_with_wrappers\n    return executor(sql, params, many, context)\n  File \"C:\\Users\\rival\\Documents\\jds_system\\venv\\Lib\\site-packages\\django\\db\\backends\\utils.py\", line 100, in _execute\n    with self.db.wrap_database_errors:\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\rival\\Documents\\jds_system\\venv\\Lib\\site-packages\\django\\db\\utils.py\", line 94, in __exit__\n    raise dj_exc_value.with_traceback(traceback) from exc_value\n  File \"C:\\Users\\rival\\Documents\\jds_system\\venv\\Lib\\site-packages\\django\\db\\backends\\utils.py\", line 105, in _execute\n    return self.cursor.execute(sql, params)\n           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^\n  File \"C:\\Users\\rival\\Documents\\jds_system\\venv\\Lib\\site-packages\\django\\db\\backends\\sqlite3\\base.py\", line 359, in execute\n    return super().execute(query, params)\n           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^\ndjango.db.utils.IntegrityError: UNIQUE constraint failed: attendance_studentattendance.student_id, attendance_studentattendance.date\n"
+  },
+  "communication": {
+    "status": "ok",
+    "details": {
+      "email_ok": false,
+      "sms_ok": true
+    }
+  },
+  "parent_portal": {
+    "status": "ok",
+    "details": {
+      "parent": "Parent",
+      "children_count": 0
+    }
+  },
+  "inventory": {
+    "status": "error",
+    "error": "Cannot assign \"<User: Teacher User (Teacher)>\": \"RestockingRequest.staff\" must be a \"Staff\" instance.",
+    "trace": "Traceback (most recent call last):\n  File \"C:\\Users\\rival\\Documents\\jds_system\\scripts\\run_full_system_tests.py\", line 26, in run_test\n    res = fn()\n  File \"C:\\Users\\rival\\Documents\\jds_system\\scripts\\run_full_system_tests.py\", line 180, in test_inventory\n    rr = RestockingRequest.objects.create(staff=staff, stock_item=si, quantity=5, reason='Test')\n  File \"C:\\Users\\rival\\Documents\\jds_system\\venv\\Lib\\site-packages\\django\\db\\models\\manager.py\", line 87, in manager_method\n    return getattr(self.get_queryset(), name)(*args, **kwargs)\n           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\rival\\Documents\\jds_system\\venv\\Lib\\site-packages\\django\\db\\models\\query.py\", line 667, in create\n    obj = self.model(**kwargs)\n  File \"C:\\Users\\rival\\Documents\\jds_system\\venv\\Lib\\site-packages\\django\\db\\models\\base.py\", line 566, in __init__\n    _setattr(self, field.name, rel_obj)\n    ~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\rival\\Documents\\jds_system\\venv\\Lib\\site-packages\\django\\db\\models\\fields\\related_descriptors.py\", line 287, in __set__\n    raise ValueError(\n    ...<7 lines>...\n    )\nValueError: Cannot assign \"<User: Teacher User (Teacher)>\": \"RestockingRequest.staff\" must be a \"Staff\" instance.\n"
+  },
+  "transport": {
+    "status": "ok",
+    "details": {
+      "skipped": "transport app missing or error",
+      "error": "Route() got unexpected keyword arguments: 'name', 'vehicle_no'"
+    }
+  },
+  "notifications": {
+    "status": "ok",
+    "details": {
+      "notification_created": 11,
+      "total": 8
+    }
+  },
+  "analytics": {
+    "status": "ok",
+    "details": {
+      "attendance_records": 1
+    }
+  },
+  "sync": {
+    "status": "ok",
+    "details": {
+      "skipped": "sync app missing",
+      "error": "SyncLog() got unexpected keyword arguments: 'source'"
+    }
+  }
+}

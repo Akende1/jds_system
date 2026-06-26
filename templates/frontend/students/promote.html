@@ -1,0 +1,203 @@
+{% extends 'base_frontend.html' %}
+
+{% block title %}Promote Students - School Management System{% endblock %}
+
+{% block page_title %}Promote Students{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-11 mx-auto">
+        <div class="card">
+            <div class="card-header bg-white">
+                <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="bulk-tab" data-bs-toggle="tab" data-bs-target="#bulk" type="button">
+                            <i class="bi bi-people"></i> Bulk Promotion
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="individual-tab" data-bs-toggle="tab" data-bs-target="#individual" type="button">
+                            <i class="bi bi-person"></i> Individual Selection
+                        </button>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-body">
+                <div class="tab-content">
+                    <!-- Bulk Promotion Tab -->
+                    <div class="tab-pane fade show active" id="bulk" role="tabpanel">
+                        <form method="POST" action="{% url 'frontend:student_promote' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="promotion_type" value="bulk">
+                            
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label">Source Grade *</label>
+                                    <select name="source_grade" class="form-select" required id="sourceGrade">
+                                        <option value="">Select Grade to Promote From</option>
+                                        {% for grade in grades %}
+                                        <option value="{{ grade.id }}">{{ grade.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Target Grade *</label>
+                                    <select name="target_grade" class="form-select" required id="targetGrade">
+                                        <option value="">Select Grade to Promote To</option>
+                                        {% for grade in grades %}
+                                        <option value="{{ grade.id }}">{{ grade.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label">Effective Date *</label>
+                                    <input type="date" name="effective_date" class="form-control" required>
+                                </div>
+                            </div>
+                            
+                            <div id="studentPreview" class="mb-4" style="display:none;">
+                                <h6 class="border-bottom pb-2 mb-3">Students to be Promoted</h6>
+                                <div class="alert alert-info">
+                                    <strong>Note:</strong> All students in the selected grade will be promoted. Review carefully before submitting.
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Admission No</th>
+                                                <th>Name</th>
+                                                <th>Current Class</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="previewBody">
+                                            <!-- Will be populated via JavaScript -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            
+                            <div class="alert alert-warning">
+                                <i class="bi bi-exclamation-triangle"></i> <strong>Warning:</strong> This action will promote all students in the selected grade. This cannot be undone easily.
+                            </div>
+                            
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="bi bi-arrow-up-circle"></i> Promote Students
+                            </button>
+                        </form>
+                    </div>
+                    
+                    <!-- Individual Selection Tab -->
+                    <div class="tab-pane fade" id="individual" role="tabpanel">
+                        <form method="POST" action="{% url 'frontend:student_promote' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="promotion_type" value="individual">
+                            
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label">Target Grade *</label>
+                                    <select name="target_grade" class="form-select" required>
+                                        <option value="">Select Grade to Promote To</option>
+                                        {% for grade in grades %}
+                                        <option value="{{ grade.id }}">{{ grade.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Effective Date *</label>
+                                    <input type="date" name="effective_date" class="form-control" required>
+                                </div>
+                            </div>
+                            
+                            <h6 class="border-bottom pb-2 mb-3">Select Students to Promote</h6>
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Filter by Grade</label>
+                                    <select class="form-select" id="filterGrade">
+                                        <option value="">All Grades</option>
+                                        {% for grade in grades %}
+                                        <option value="{{ grade.id }}">{{ grade.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Search Student</label>
+                                    <input type="text" class="form-control" id="searchStudent" placeholder="Search by name or admission no...">
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-check">
+                                    <input type="checkbox" class="form-check-input" id="selectAll">
+                                    <span class="form-check-label">Select All</span>
+                                </label>
+                            </div>
+                            
+                            <div class="table-responsive mb-4" style="max-height: 400px; overflow-y: auto;">
+                                <table class="table table-sm table-hover">
+                                    <thead class="table-light sticky-top">
+                                        <tr>
+                                            <th width="50"></th>
+                                            <th>Admission No</th>
+                                            <th>Name</th>
+                                            <th>Grade</th>
+                                            <th>Class</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for student in students %}
+                                        <tr>
+                                            <td>
+                                                <input type="checkbox" name="selected_students" value="{{ student.id }}" class="form-check-input">
+                                            </td>
+                                            <td>{{ student.admission_number }}</td>
+                                            <td>{{ student.get_full_name }}</td>
+                                            <td>{{ student.grade.name }}</td>
+                                            <td>{{ student.current_class.name|default:"-" }}</td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="5" class="text-center text-muted">No students found</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <div class="alert alert-info">
+                                <strong>Selected:</strong> <span id="selectedCount">0</span> student(s)
+                            </div>
+                            
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="bi bi-arrow-up-circle"></i> Promote Selected Students
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Select all checkbox functionality
+document.getElementById('selectAll')?.addEventListener('change', function() {
+    document.querySelectorAll('input[name="selected_students"]').forEach(cb => {
+        cb.checked = this.checked;
+    });
+    updateSelectedCount();
+});
+
+// Update selected count
+function updateSelectedCount() {
+    const count = document.querySelectorAll('input[name="selected_students"]:checked').length;
+    document.getElementById('selectedCount').textContent = count;
+}
+
+document.querySelectorAll('input[name="selected_students"]').forEach(cb => {
+    cb.addEventListener('change', updateSelectedCount);
+});
+</script>
+{% endblock %}

@@ -1,0 +1,163 @@
+{% extends 'base_frontend.html' %}
+
+{% block title %}Transport Management - School Management System{% endblock %}
+
+{% block page_title %}Transport Management{% endblock %}
+
+{% block content %}
+<div class="row g-4 mb-4">
+    <div class="col-md-4">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="stat-icon" style="background: rgba(13, 110, 253, 0.1); color: #0d6efd;">
+                    <i class="bi bi-bus-front"></i>
+                </div>
+                <div class="stat-value">{{ total_routes }}</div>
+                <div class="stat-label">Active Routes</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="stat-icon" style="background: rgba(25, 135, 84, 0.1); color: #198754;">
+                    <i class="bi bi-people"></i>
+                </div>
+                <div class="stat-value">{{ today_pickups }}</div>
+                <div class="stat-label">Students Today</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="stat-icon" style="background: rgba(255, 193, 7, 0.1); color: #ffc107;">
+                    <i class="bi bi-truck"></i>
+                </div>
+                <div class="stat-value">{{ total_vehicles }}</div>
+                <div class="stat-label">Total Vehicles</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-12">
+        <div class="card data-table">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Transport Routes</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Route Name</th>
+                                <th>Driver</th>
+                                <th>Vehicle</th>
+                                <th>Students</th>
+                                <th>Pickup Time</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for route in routes %}
+                            <tr>
+                                <td><strong>{{ route.route_name }}</strong></td>
+                                <td>{{ route.driver_name|default:"Not assigned" }}</td>
+                                <td>{{ route.vehicle_number|default:"Not assigned" }}</td>
+                                <td>{{ route.student_count }}</td>
+                                <td>{{ route.pickup_time|default:"Not set" }}</td>
+                                <td>
+                                    {% if route.is_active %}
+                                        <span class="badge bg-success">Active</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Inactive</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">No routes configured</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mt-2">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Today's Pickup Schedule</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    {% for pickup in today_schedule %}
+                    <div class="col-md-4">
+                        <div class="p-3" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 0.75rem; color: white;">
+                            <h6>{{ pickup.route_name }}</h6>
+                            <div class="d-flex justify-content-between mt-2">
+                                <div>
+                                    <i class="bi bi-clock"></i> {{ pickup.pickup_time }}
+                                </div>
+                                <div>
+                                    <i class="bi bi-people"></i> {{ pickup.student_count }}
+                                </div>
+                            </div>
+                            <div class="mt-2">
+                                <small><i class="bi bi-truck"></i> {{ pickup.vehicle_number }}</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="col-12 text-center text-muted py-4">
+                        No pickups scheduled for today
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mt-2">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <button class="btn btn-outline-primary w-100 p-3">
+                            <i class="bi bi-plus-circle"></i><br>Add New Route
+                        </button>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-outline-success w-100 p-3">
+                            <i class="bi bi-truck"></i><br>Manage Vehicles
+                        </button>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-outline-info w-100 p-3">
+                            <i class="bi bi-calendar-check"></i><br>Mark Attendance
+                        </button>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-outline-secondary w-100 p-3">
+                            <i class="bi bi-file-earmark-text"></i><br>Generate Report
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

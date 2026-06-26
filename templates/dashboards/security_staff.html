@@ -1,0 +1,79 @@
+{% extends 'base_frontend.html' %}
+
+{% block title %}Security Staff Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <h1 class="mb-4">🔐 Security Staff Portal</h1>
+    
+    {% if messages %}
+        <div class="alert alert-info alert-dismissible fade show" role="alert">
+            {% for message in messages %}
+                <p>{{ message }}</p>
+            {% endfor %}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    {% endif %}
+    
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="btn-group" role="group">
+                <a href="#" class="btn btn-primary">
+                    <i class="bi bi-clipboard-check"></i> Log Patrol/Entry
+                </a>
+                <a href="#" class="btn btn-danger">
+                    <i class="bi bi-exclamation-triangle"></i> Report Incident
+                </a>
+                <a href="#" class="btn btn-secondary">
+                    <i class="bi bi-calendar-event"></i> Duty Roster
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Status Cards -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h6 class="card-title">Duty Status</h6>
+                    <h2>On Duty</h2>
+                    <small>Current shift active</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-warning text-dark">
+                <div class="card-body">
+                    <h6 class="card-title">Incidents Today</h6>
+                    <h2>0</h2>
+                    <small>Reported incidents</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h6 class="card-title">Visitors</h6>
+                    <h2>0</h2>
+                    <small>Checked in today</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">🛡️ Security Management</h5>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle"></i> <strong>Security features coming soon.</strong> 
+                You'll be able to manage duty rosters, log patrols, record visitor entries, and report incidents here.
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

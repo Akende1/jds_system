@@ -1,0 +1,26 @@
+{% extends 'base_frontend.html' %}
+
+{% block title %}Welcome - School Management System{% endblock %}
+
+{% block page_title %}Welcome to School Management System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <i class="bi bi-house-door" style="font-size: 4rem; color: #0d6efd;"></i>
+                <h2 class="mt-4">Welcome to JDS School Management System</h2>
+                <p class="text-muted mb-4">Your account is being set up. Please contact the administrator.</p>
+                
+                {% if user.is_superuser %}
+                <div class="alert alert-info">
+                    <strong>Administrator Notice:</strong> You're logged in as a superuser. 
+                    To see role-specific dashboards, please set your user_type field or use a regular user account.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

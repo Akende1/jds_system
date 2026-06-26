@@ -1,0 +1,214 @@
+{% extends 'base_frontend.html' %}
+
+{% block title %}Invoice {{ invoice.invoice_number }} - School Management System{% endblock %}
+
+{% block page_title %}Invoice Details{% endblock %}
+
+{% block content %}
+<div class="invoice-detail-page">
+<div class="row mb-3">
+    <div class="col-md-12">
+        <a href="{% url 'frontend:invoice_list' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Invoices
+        </a>
+        <button onclick="window.print()" class="btn btn-outline-primary">
+            <i class="bi bi-printer"></i> Print Invoice
+        </button>
+        {% if invoice.balance > 0 %}
+        <a href="{% url 'frontend:payment_record' %}?invoice={{ invoice.id }}" class="btn btn-success">
+            <i class="bi bi-cash"></i> Record Payment
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <!-- Invoice Details Card -->
+        <div class="card mb-3">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Invoice {{ invoice.invoice_number }}</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h6 class="text-muted">Student Information</h6>
+                        <p class="mb-1">
+                            <strong>Name:</strong> 
+                            <a href="{% url 'frontend:student_detail' invoice.student.id %}">
+                                {{ invoice.student.get_full_name }}
+                            </a>
+                        </p>
+                        <p class="mb-1"><strong>Admission No:</strong> {{ invoice.student.admission_number }}</p>
+                        <p class="mb-1"><strong>Grade:</strong> {{ invoice.student.grade.name }}</p>
+                        <p class="mb-1"><strong>Class:</strong> {{ invoice.student.current_class.name|default:"-" }}</p>
+                    </div>
+                    <div class="col-md-6 text-md-end">
+                        <h6 class="text-muted">Invoice Information</h6>
+                        <p class="mb-1"><strong>Invoice Date:</strong> {{ invoice.created_at|date:"F d, Y" }}</p>
+                        <p class="mb-1"><strong>Due Date:</strong> {{ invoice.due_date|date:"F d, Y"|default:"-" }}</p>
+                        <p class="mb-1">
+                            <strong>Status:</strong>
+                            {% if invoice.status == 'paid' %}
+                                <span class="badge bg-success">Paid</span>
+                            {% elif invoice.status == 'partial' %}
+                                <span class="badge bg-warning">Partially Paid</span>
+                            {% elif invoice.status == 'overdue' %}
+                                <span class="badge bg-danger">Overdue</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Unpaid</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                
+                <h6 class="border-bottom pb-2 mb-3">Invoice Items</h6>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Description</th>
+                                <th class="text-end">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in invoice.items.all %}
+                            <tr>
+                                <td>{{ item.description }}</td>
+                                <td class="text-end">K {{ item.amount|floatformat:2 }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td>{{ invoice.description|default:"Tuition Fees" }}</td>
+                                <td class="text-end">K {{ invoice.total_amount|floatformat:2 }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot class="table-light">
+                            <tr>
+                                <th>Total Amount</th>
+                                <th class="text-end">K {{ invoice.total_amount|floatformat:2 }}</th>
+                            </tr>
+                            <tr>
+                                <th>Amount Paid</th>
+                                <th class="text-end text-success">K {{ invoice.amount_paid|floatformat:2 }}</th>
+                            </tr>
+                            <tr>
+                                <th>Outstanding Balance</th>
+                                <th class="text-end text-danger">K {{ invoice.balance|floatformat:2 }}</th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                
+                {% if invoice.notes %}
+                <div class="alert alert-info mt-3">
+                    <strong>Notes:</strong> {{ invoice.notes }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Payment History -->
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Payment History</h5>
+            </div>
+            <div class="card-body">
+                {% if payments %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Receipt #</th>
+                                <th>Date</th>
+                                <th>Amount</th>
+                                <th>Method</th>
+                                <th>Received By</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for payment in payments %}
+                            <tr>
+                                <td><strong>{{ payment.receipt_number }}</strong></td>
+                                <td>{{ payment.payment_date|date:"M d, Y" }}</td>
+                                <td>K {{ payment.amount|floatformat:2 }}</td>
+                                <td>{{ payment.get_payment_method_display }}</td>
+                                <td>{{ payment.received_by.get_full_name|default:"-" }}</td>
+                                <td>
+                                    <a href="{% url 'frontend:payment_receipt' payment.id %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-receipt"></i> View
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted text-center py-3">No payments recorded yet</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sidebar -->
+    <div class="col-md-4">
+        <!-- Financial Summary -->
+        <div class="card mb-3">
+            <div class="card-header bg-white">
+                <h6 class="mb-0">Financial Summary</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Invoiced:</span>
+                    <strong>K {{ invoice.total_amount|floatformat:2 }}</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Paid:</span>
+                    <strong class="text-success">K {{ invoice.amount_paid|floatformat:2 }}</strong>
+                </div>
+                <hr>
+                <div class="d-flex justify-content-between">
+                    <strong>Balance:</strong>
+                    <strong class="text-danger">K {{ invoice.balance|floatformat:2 }}</strong>
+                </div>
+                
+                {% if invoice.balance > 0 %}
+                <div class="d-grid mt-3">
+                    <a href="{% url 'frontend:payment_record' %}?invoice={{ invoice.id }}" class="btn btn-success">
+                        <i class="bi bi-cash"></i> Pay Now
+                    </a>
+                </div>
+                {% else %}
+                <div class="alert alert-success mt-3 mb-0">
+                    <i class="bi bi-check-circle"></i> Fully Paid
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="card">
+            <div class="card-header bg-white">
+                <h6 class="mb-0">Quick Actions</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'frontend:student_account' invoice.student.id %}" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-file-text"></i> Full Account Statement
+                    </a>
+                    <a href="{% url 'frontend:student_detail' invoice.student.id %}" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-person"></i> View Student Profile
+                    </a>
+                    <button onclick="window.print()" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-printer"></i> Print Invoice
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+{% endblock %}

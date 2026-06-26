@@ -1,0 +1,71 @@
+<!-- Shared admin/top navbar partial -->
+<nav class="navbar navbar-expand-lg">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="{% url 'admin:index' %}">
+            <i class="fas fa-graduation-cap"></i> School Management System
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto align-items-center">
+                {% if user.is_authenticated %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="modulesDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-th-large"></i> Modules
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{% url 'admin:administration_student_changelist' %}">
+                                <i class="fas fa-users"></i> Administration</a></li>
+                            <li><a class="dropdown-item" href="{% url 'admin:academics_subject_changelist' %}">
+                                <i class="fas fa-book"></i> Academics</a></li>
+                            <li><a class="dropdown-item" href="{% url 'admin:finance_feeinvoice_changelist' %}">
+                                <i class="fas fa-money-bill"></i> Finance</a></li>
+                            <li><a class="dropdown-item" href="{% url 'admin:communication_announcement_changelist' %}">
+                                <i class="fas fa-bullhorn"></i> Communication</a></li>
+                            <li><a class="dropdown-item" href="{% url 'admin:attendance_studentattendance_changelist' %}">
+                                <i class="fas fa-clipboard-check"></i> Attendance</a></li>
+                            <li><a class="dropdown-item" href="{% url 'admin:lms_course_changelist' %}">
+                                <i class="fas fa-laptop"></i> LMS</a></li>
+                            <li><a class="dropdown-item" href="{% url 'admin:hr_leavetype_changelist' %}">
+                                <i class="fas fa-user-tie"></i> Human Resources</a></li>
+                            <li><a class="dropdown-item" href="{% url 'admin:inventory_inventoryitem_changelist' %}">
+                                <i class="fas fa-boxes"></i> Inventory</a></li>
+                            <li><a class="dropdown-item" href="{% url 'admin:transport_route_changelist' %}">
+                                <i class="fas fa-bus"></i> Transport</a></li>
+                            <li><a class="dropdown-item" href="{% url 'admin:security_auditlog_changelist' %}">
+                                <i class="fas fa-shield-alt"></i> Security</a></li>
+                            <li><a class="dropdown-item" href="{% url 'admin:analytics_performancetrend_changelist' %}">
+                                <i class="fas fa-chart-line"></i> Analytics</a></li>
+                            <li><a class="dropdown-item" href="{% url 'admin:sync_synclog_changelist' %}">
+                                <i class="fas fa-sync"></i> Sync Module</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-circle"></i> {{ user.get_full_name|default:user.username }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-user"></i> Profile</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-cog"></i> Settings</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{% url 'admin:logout' %}">
+                                <i class="fas fa-sign-out-alt"></i> Logout</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item ms-2">
+                        <button id="darkModeToggle" class="btn" title="Toggle Dark Mode" data-bs-toggle="tooltip">
+                            <i class="fas fa-moon"></i>
+                        </button>
+                    </li>
+                {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'admin:login' %}">
+                            <i class="fas fa-sign-in-alt"></i> Login
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</nav>

@@ -1,0 +1,145 @@
+{% extends 'base_frontend.html' %}
+
+{% block title %}Income List - JDS Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2><i class="bi bi-arrow-down-circle text-success"></i> Income</h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'frontend:dashboard' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'frontend:financial_overview' %}">Financial</a></li>
+                    <li class="breadcrumb-item active">Income</li>
+                </ol>
+            </nav>
+        </div>
+        <a href="{% url 'frontend:payment_list' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Record Payment
+        </a>
+    </div>
+
+    <!-- Filter Card -->
+    <div class="form-card mb-4">
+            <form method="get" class="form-grid filter-form">
+                <div>
+                    <label class="form-label">From Date</label>
+                    <input type="date" class="form-control" name="date_from" value="{{ request.GET.date_from }}">
+                </div>
+                <div>
+                    <label class="form-label">To Date</label>
+                    <input type="date" class="form-control" name="date_to" value="{{ request.GET.date_to }}">
+                </div>
+                <div>
+                    <label class="form-label">Search</label>
+                    <input type="text" class="form-control" name="search" placeholder="Student name..." value="{{ request.GET.search }}">
+                </div>
+                <div>
+                    <label class="form-label">&nbsp;</label>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-search"></i> Filter
+                    </button>
+                </div>
+            </form>
+    </div>
+
+    <!-- Summary -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row text-center">
+                <div class="col-md-4">
+                    <h6 class="text-muted">Total Payments</h6>
+                    <h3>{{ payments.count }}</h3>
+                </div>
+                <div class="col-md-4">
+                    <h6 class="text-muted">Total Amount</h6>
+                    <h3 class="text-success">K {{ total_income|floatformat:2 }}</h3>
+                </div>
+                <div class="col-md-4">
+                    <h6 class="text-muted">Expected Income</h6>
+                    <h3 class="text-info">K {{ expected_income|floatformat:2 }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payments Table -->
+    <div class="card">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">Payment Records</h5>
+        </div>
+        <div class="card-body">
+            {% if payments %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Student</th>
+                            <th>Invoice #</th>
+                            <th>Amount</th>
+                            <th>Method</th>
+                            <th>Reference</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for payment in payments %}
+                        <tr>
+                            <td>{{ payment.payment_date|date:"d M Y" }}</td>
+                            <td>
+                                <a href="{% url 'frontend:student_detail' payment.student.id %}">
+                                    {{ payment.student.user.get_full_name }}
+                                </a>
+                            </td>
+                            <td>
+                                {% if payment.invoice %}
+                                <a href="{% url 'frontend:invoice_detail' payment.invoice.id %}">
+                                    {{ payment.invoice.invoice_number }}
+                                </a>
+                                {% else %}
+                                -
+                                {% endif %}
+                            </td>
+                            <td><strong>K {{ payment.amount|floatformat:2 }}</strong></td>
+                            <td>
+                                {% if payment.payment_method == 'cash' %}
+                                <span class="badge bg-success">Cash</span>
+                                {% elif payment.payment_method == 'bank' %}
+                                <span class="badge bg-primary">Bank</span>
+                                {% elif payment.payment_method == 'mobile' %}
+                                <span class="badge bg-info">Mobile Money</span>
+                                {% else %}
+                                <span class="badge bg-secondary">{{ payment.payment_method|title }}</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ payment.reference_number|default:"-" }}</td>
+                            <td>
+                                <a href="{% url 'frontend:student_account' payment.student.id %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="3" class="text-end"><strong>Total:</strong></td>
+                            <td><strong>K {{ total_income|floatformat:2 }}</strong></td>
+                            <td colspan="3"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-arrow-down-circle text-muted" style="font-size: 3rem;"></i>
+                <p class="text-muted mt-3">No income records found.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

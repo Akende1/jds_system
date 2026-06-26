@@ -1,0 +1,244 @@
+{% extends 'base.html' %}
+
+{% block title %}Inventory Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+        <div>
+            <h1 class="h3 mb-1">Inventory Management</h1>
+            <p class="text-muted mb-0">Update the stock items employees and teachers can request from.</p>
+        </div>
+        <a href="{% url 'frontend:manager_approvals' %}" class="btn btn-outline-primary">
+            <i class="bi bi-check2-square me-2"></i>
+            Review Requests
+        </a>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card stat-card h-100">
+                <div class="card-body">
+                    <div class="stat-icon bg-primary bg-opacity-10 text-primary">
+                        <i class="bi bi-box-seam"></i>
+                    </div>
+                    <div class="stat-value">{{ summary.total_items }}</div>
+                    <div class="stat-label">Active stock items in view</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card stat-card h-100">
+                <div class="card-body">
+                    <div class="stat-icon bg-success bg-opacity-10 text-success">
+                        <i class="bi bi-journal-bookmark"></i>
+                    </div>
+                    <div class="stat-value">{{ summary.stationery_items }}</div>
+                    <div class="stat-label">Stationery items available to staff</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card stat-card h-100">
+                <div class="card-body">
+                    <div class="stat-icon bg-danger bg-opacity-10 text-danger">
+                        <i class="bi bi-exclamation-triangle"></i>
+                    </div>
+                    <div class="stat-value">{{ summary.low_stock_items }}</div>
+                    <div class="stat-label">Items at or below threshold</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3 align-items-end">
+                <div class="col-md-6">
+                    <label class="form-label">Search</label>
+                    <input type="text" name="search" value="{{ search }}" class="form-control" placeholder="Search by item, category, or supplier">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Category</label>
+                    <select name="category" class="form-select">
+                        <option value="">All categories</option>
+                        {% for category in categories %}
+                        <option value="{{ category }}" {% if category_filter == category %}selected{% endif %}>{{ category }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2 d-grid">
+                    <button type="submit" class="btn btn-primary">Filter</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-white">
+            <h2 class="h5 mb-0">Add Inventory Item</h2>
+        </div>
+        <div class="card-body">
+            <form method="POST" class="row g-3">
+                {% csrf_token %}
+                <input type="hidden" name="action_type" value="create_item">
+                <div class="col-md-4">
+                    <label class="form-label">Item Name</label>
+                    <input type="text" name="name" class="form-control" placeholder="Chalk, pens, exercise books" required>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Unit</label>
+                    <select name="unit" class="form-select" required>
+                        {% for value, label in unit_choices %}
+                        <option value="{{ value }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Quantity</label>
+                    <input type="number" step="0.01" min="0" name="current_quantity" class="form-control" value="0" required>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Threshold</label>
+                    <input type="number" step="0.01" min="0" name="minimum_threshold" class="form-control" value="0" required>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Unit Cost</label>
+                    <input type="number" step="0.01" min="0" name="unit_cost" class="form-control" value="0" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Category</label>
+                    <input type="text" name="category" class="form-control" value="Stationery" placeholder="Stationery, Cleaning, IT">
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label">Supplier</label>
+                    <input type="text" name="supplier" class="form-control" placeholder="Supplier or vendor">
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <div class="form-check mt-4">
+                        <input class="form-check-input" type="checkbox" name="is_active" id="createItemActive" checked>
+                        <label class="form-check-label" for="createItemActive">Active</label>
+                    </div>
+                </div>
+                <div class="col-12 d-grid d-md-flex justify-content-md-end">
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-plus-circle me-2"></i>
+                        Add Item
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h2 class="h5 mb-0">Current Inventory</h2>
+            <span class="badge bg-light text-dark">{{ stock_items.count }} item{{ stock_items.count|pluralize }}</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Item</th>
+                            <th>Category</th>
+                            <th>Qty</th>
+                            <th>Threshold</th>
+                            <th>Cost</th>
+                            <th>Supplier</th>
+                            <th>Status</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in stock_items %}
+                        <tr>
+                            <td class="min-w-250">
+                                <input type="text" name="name" value="{{ item.name }}" class="form-control form-control-sm mb-2" form="stock-form-{{ item.id }}">
+                                <select name="unit" class="form-select form-select-sm" form="stock-form-{{ item.id }}">
+                                    {% for value, label in unit_choices %}
+                                    <option value="{{ value }}" {% if item.unit == value %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                            <td>
+                                <input type="text" name="category" value="{{ item.category }}" class="form-control form-control-sm" form="stock-form-{{ item.id }}">
+                            </td>
+                            <td>
+                                <input type="number" step="0.01" min="0" name="current_quantity" value="{{ item.current_quantity }}" class="form-control form-control-sm" form="stock-form-{{ item.id }}">
+                            </td>
+                            <td>
+                                <input type="number" step="0.01" min="0" name="minimum_threshold" value="{{ item.minimum_threshold }}" class="form-control form-control-sm" form="stock-form-{{ item.id }}">
+                            </td>
+                            <td>
+                                <input type="number" step="0.01" min="0" name="unit_cost" value="{{ item.unit_cost }}" class="form-control form-control-sm" form="stock-form-{{ item.id }}">
+                            </td>
+                            <td>
+                                <input type="text" name="supplier" value="{{ item.supplier }}" class="form-control form-control-sm" form="stock-form-{{ item.id }}">
+                            </td>
+                            <td>
+                                <div class="form-check form-switch m-0">
+                                    <input class="form-check-input" type="checkbox" name="is_active" {% if item.is_active %}checked{% endif %} form="stock-form-{{ item.id }}">
+                                    <label class="form-check-label">{% if item.needs_restocking %}<span class="badge bg-danger">Low stock</span>{% else %}<span class="badge bg-success">OK</span>{% endif %}</label>
+                                </div>
+                            </td>
+                            <td class="text-end">
+                                <form id="stock-form-{{ item.id }}" method="POST" class="d-inline">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action_type" value="update_item">
+                                    <input type="hidden" name="stock_item_id" value="{{ item.id }}">
+                                </form>
+                                <button type="submit" class="btn btn-sm btn-primary" form="stock-form-{{ item.id }}">Save</button>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center text-muted py-4">No inventory items found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h2 class="h5 mb-0">Recent Stock Transactions</h2>
+            <span class="badge bg-light text-dark">Latest updates</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-striped align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Date</th>
+                            <th>Item</th>
+                            <th>Type</th>
+                            <th>Quantity</th>
+                            <th>Recorded By</th>
+                            <th>Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for transaction in recent_transactions %}
+                        <tr>
+                            <td>{{ transaction.transaction_date|date:"M d, Y H:i" }}</td>
+                            <td>{{ transaction.stock_item.name }}</td>
+                            <td><span class="badge bg-info text-dark">{{ transaction.get_transaction_type_display }}</span></td>
+                            <td>{{ transaction.quantity }}</td>
+                            <td>{% if transaction.recorded_by %}{{ transaction.recorded_by.get_full_name|default:transaction.recorded_by.username }}{% else %}System{% endif %}</td>
+                            <td>{{ transaction.notes|default:"-" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-4">No recent transactions yet.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

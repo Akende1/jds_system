@@ -1,0 +1,135 @@
+{% extends 'base_frontend.html' %}
+
+{% block title %}Register New Student - School Management System{% endblock %}
+
+{% block page_title %}Register New Student{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-10 mx-auto">
+        <div class="form-card form-card-narrow">
+                <h5 class="mb-3">Student Registration Form</h5>
+                <form method="POST" enctype="multipart/form-data" class="form-grid">
+                    {% csrf_token %}
+                    
+                    <h6 class="form-section-title">Personal Information</h6>
+                    <div class="full-width row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label">First Name *</label>
+                            <input type="text" name="first_name" class="form-control" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Last Name *</label>
+                            <input type="text" name="last_name" class="form-control" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Middle Name</label>
+                            <input type="text" name="middle_name" class="form-control">
+                        </div>
+                    </div>
+                    
+                    <div class="full-width row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Date of Birth *</label>
+                            <input type="date" name="date_of_birth" class="form-control" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Gender *</label>
+                            <select name="gender" class="form-select" required>
+                                <option value="">Select Gender</option>
+                                <option value="M">Male</option>
+                                <option value="F">Female</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Profile Picture</label>
+                            <input type="file" name="profile_picture" class="form-control" accept="image/*">
+                        </div>
+                    </div>
+                    
+                    <h6 class="form-section-title">Academic Information</h6>
+                    <div class="full-width row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Grade *</label>
+                            <select name="grade" class="form-select" required>
+                                <option value="">Select Grade</option>
+                                {% for grade in grades %}
+                                <option value="{{ grade.id }}">{{ grade.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Class</label>
+                            <select name="current_class" class="form-select">
+                                <option value="">Select Class (Optional)</option>
+                                {% for class in classes %}
+                                <option value="{{ class.id }}">{{ class.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="full-width row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Admission Date *</label>
+                            <input type="date" name="admission_date" class="form-control" value="{{ today|date:'Y-m-d' }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Enrollment Status *</label>
+                            <select name="enrollment_status" class="form-select" required>
+                                <option value="enrolled">Enrolled</option>
+                                <option value="pending">Pending</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <h6 class="form-section-title">Contact Information</h6>
+                    <div class="full-width row g-3 mb-3">
+                        <div class="col-md-12">
+                            <label class="form-label">Address</label>
+                            <textarea name="address" class="form-control" rows="2"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="full-width row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Emergency Contact</label>
+                            <input type="text" name="emergency_contact" class="form-control" placeholder="+260...">
+                        </div>
+                    </div>
+                    
+                    <h6 class="form-section-title">Parent/Guardian Information</h6>
+                    <div class="full-width row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Parent Email</label>
+                            <input type="email" name="parent_email" class="form-control" placeholder="Create parent account">
+                            <small class="text-muted">If provided, a parent account will be created</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Parent Phone</label>
+                            <input type="text" name="parent_phone" class="form-control" placeholder="+260...">
+                        </div>
+                    </div>
+                    
+                    <div class="full-width row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Parent First Name</label>
+                            <input type="text" name="parent_first_name" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Parent Last Name</label>
+                            <input type="text" name="parent_last_name" class="form-control">
+                        </div>
+                    </div>
+                    
+                    <div class="full-width d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-person-plus"></i> Register Student
+                        </button>
+                        <a href="{% url 'frontend:student_list' %}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

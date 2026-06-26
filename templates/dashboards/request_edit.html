@@ -1,0 +1,45 @@
+{% extends 'base_frontend.html' %}
+
+{% block title %}Request Edit - Parent Portal{% endblock %}
+
+{% block page_title %}Request Edit{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Submit an Edit Request</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Student</label>
+                        <select name="student" class="form-select" required>
+                            {% for child in children %}
+                            <option value="{{ child.id }}" {% if selected_student and selected_student|stringformat:"s" == child.id|stringformat:"s" %}selected{% endif %}>{{ child.get_full_name }} ({{ child.admission_number }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Field to edit (e.g., guardian_phone)</label>
+                        <input name="field_name" class="form-control" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Requested value / note</label>
+                        <textarea name="requested_value" class="form-control" rows="4" required></textarea>
+                    </div>
+
+                    <div class="d-flex justify-content-end">
+                        <a href="{% url 'frontend:dashboard' %}" class="btn btn-outline-secondary me-2">Cancel</a>
+                        <button class="btn btn-primary" type="submit">Submit Request</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,214 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ student.user.get_full_name }} - Student Details{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h2><i class="fas fa-user-graduate"></i> Student Details</h2>
+        </div>
+        <div class="col-md-6 text-end">
+            <a href="{% url 'administration:student_list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to List
+            </a>
+            <a href="{% url 'admin:administration_student_change' student.id %}" class="btn btn-warning">
+                <i class="fas fa-edit"></i> Edit
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Personal Information -->
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-body text-center">
+                    {% if student.user.profile_picture %}
+                    <img src="{{ student.user.profile_picture.url }}" class="rounded-circle mb-3" width="150" height="150">
+                    {% else %}
+                    <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center mb-3" style="width: 150px; height: 150px; font-size: 4rem;">
+                        {{ student.user.first_name.0 }}{{ student.user.last_name.0 }}
+                    </div>
+                    {% endif %}
+                    <h4>{{ student.user.get_full_name }}</h4>
+                    <p class="text-muted">{{ student.admission_number }}</p>
+                    {% if student.current_class %}
+                    <span class="badge bg-info">{{ student.current_class.grade.name }} - {{ student.current_class.section }}</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-info-circle"></i> Personal Information</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <tr>
+                            <th>Date of Birth:</th>
+                            <td>{{ student.date_of_birth|date:"M d, Y" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Gender:</th>
+                            <td>{{ student.get_gender_display }}</td>
+                        </tr>
+                        <tr>
+                            <th>Blood Group:</th>
+                            <td>{{ student.blood_group|default:"N/A" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Address:</th>
+                            <td>{{ student.address }}</td>
+                        </tr>
+                        <tr>
+                            <th>Email:</th>
+                            <td>{{ student.user.email }}</td>
+                        </tr>
+                        <tr>
+                            <th>Phone:</th>
+                            <td>{{ student.user.phone_number|default:"N/A" }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-users"></i> Guardian Information</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <tr>
+                            <th>Name:</th>
+                            <td>{{ student.guardian_name }}</td>
+                        </tr>
+                        <tr>
+                            <th>Relationship:</th>
+                            <td>{{ student.guardian_relationship }}</td>
+                        </tr>
+                        <tr>
+                            <th>Phone:</th>
+                            <td>{{ student.guardian_phone }}</td>
+                        </tr>
+                        <tr>
+                            <th>Email:</th>
+                            <td>{{ student.guardian_email|default:"N/A" }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Academic Information -->
+        <div class="col-md-8">
+            <!-- Attendance Card -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-calendar-check"></i> Attendance</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-4">
+                            <h3 class="text-success">{{ attendance_percentage }}%</h3>
+                            <p class="text-muted">Attendance Rate</p>
+                        </div>
+                        <div class="col-md-4">
+                            <h3 class="text-primary">{{ present_days }}</h3>
+                            <p class="text-muted">Days Present</p>
+                        </div>
+                        <div class="col-md-4">
+                            <h3 class="text-danger">{{ total_days|add:"-"|add:present_days }}</h3>
+                            <p class="text-muted">Days Absent</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Results -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-chart-line"></i> Recent Exam Results</h5>
+                    <a href="{% url 'academics:result_list' %}?student={{ student.id }}" class="btn btn-sm btn-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if recent_results %}
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Subject</th>
+                                    <th>Exam Date</th>
+                                    <th>Marks</th>
+                                    <th>Percentage</th>
+                                    <th>Grade</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for result in recent_results %}
+                                <tr>
+                                    <td>{{ result.exam.subject.name }}</td>
+                                    <td>{{ result.exam.exam_date|date:"M d, Y" }}</td>
+                                    <td>{{ result.marks_obtained }}/{{ result.exam.max_marks }}</td>
+                                    <td>{{ result.percentage }}%</td>
+                                    <td><span class="badge bg-{{ result.grade|lower }}">{{ result.grade }}</span></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center">No exam results available</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Fee Status -->
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-money-bill-wave"></i> Fee Status</h5>
+                    <a href="{% url 'finance:invoice_list' %}?search={{ student.admission_number }}" class="btn btn-sm btn-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if invoices %}
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Invoice No.</th>
+                                    <th>Issue Date</th>
+                                    <th>Total Amount</th>
+                                    <th>Paid</th>
+                                    <th>Balance</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for invoice in invoices %}
+                                <tr>
+                                    <td><a href="{% url 'finance:invoice_detail' invoice.id %}">{{ invoice.invoice_number }}</a></td>
+                                    <td>{{ invoice.issue_date|date:"M d, Y" }}</td>
+                                    <td>₦{{ invoice.total_amount|floatformat:2 }}</td>
+                                    <td>₦{{ invoice.amount_paid|floatformat:2 }}</td>
+                                    <td>₦{{ invoice.balance|floatformat:2 }}</td>
+                                    <td>
+                                        {% if invoice.balance == 0 %}
+                                        <span class="badge bg-success">Paid</span>
+                                        {% else %}
+                                        <span class="badge bg-warning">Pending</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center">No invoices found</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

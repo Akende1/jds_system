@@ -1,0 +1,304 @@
+{% extends 'base_frontend.html' %}
+
+{% block title %}Manager Dashboard - School Management System{% endblock %}
+
+{% block page_title %}Manager Dashboard{% endblock %}
+
+{% block content %}
+<div class="row g-4 mb-4">
+    <!-- Enrollment Statistics -->
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="stat-icon" style="background: rgba(13, 110, 253, 0.1); color: #0d6efd;">
+                    <i class="bi bi-people"></i>
+                </div>
+                <div class="stat-value">{{ stats.total_students }}</div>
+                <div class="stat-label">Total Students</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="stat-icon" style="background: rgba(25, 135, 84, 0.1); color: #198754;">
+                    <i class="bi bi-person-plus"></i>
+                </div>
+                <div class="stat-value">{{ stats.new_students_this_term }}</div>
+                <div class="stat-label">New This Term</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="stat-icon" style="background: rgba(255, 193, 7, 0.1); color: #ffc107;">
+                    <i class="bi bi-person-check"></i>
+                </div>
+                <div class="stat-value">{{ stats.teachers_present }}/{{ stats.total_teachers }}</div>
+                <div class="stat-label">Teachers Present</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <div class="stat-icon" style="background: rgba(220, 53, 69, 0.1); color: #dc3545;">
+                    <i class="bi bi-exclamation-triangle"></i>
+                </div>
+                <div class="stat-value">{{ alerts.count }}</div>
+                <div class="stat-label">System Alerts</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Finance Overview -->
+<div class="row g-4 mb-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Financial Overview</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="text-center p-3" style="background: #f8f9fa; border-radius: 0.5rem;">
+                            <div style="font-size: 1.75rem; font-weight: 700; color: #0d6efd;">
+                                K {{ finance.total_invoiced|floatformat:2 }}
+                            </div>
+                            <div class="text-muted">Total Invoiced</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center p-3" style="background: #d1e7dd; border-radius: 0.5rem;">
+                            <div style="font-size: 1.75rem; font-weight: 700; color: #198754;">
+                                K {{ finance.total_collected|floatformat:2 }}
+                            </div>
+                            <div class="text-muted">Collected</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center p-3" style="background: #f8d7da; border-radius: 0.5rem;">
+                            <div style="font-size: 1.75rem; font-weight: 700; color: #dc3545;">
+                                K {{ finance.total_outstanding|floatformat:2 }}
+                            </div>
+                            <div class="text-muted">Outstanding</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-4">
+                    <canvas id="collectionChart" height="80"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Collection Rate</h5>
+            </div>
+            <div class="card-body d-flex align-items-center justify-content-center">
+                <div class="text-center">
+                    <canvas id="collectionRateChart" width="200" height="200"></canvas>
+                    <div class="mt-3">
+                        <h3 class="mb-0">{{ finance.collection_rate|floatformat:1 }}%</h3>
+                        <p class="text-muted mb-0">Collection Rate</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Payments and Alerts -->
+<div class="row g-4">
+    <div class="col-md-6">
+        <div class="card data-table">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Recent Payments</h5>
+                <a href="{% url 'frontend:payment_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Receipt #</th>
+                                <th>Student</th>
+                                <th>Amount</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for payment in recent_payments %}
+                            <tr>
+                                <td>{{ payment.receipt_number }}</td>
+                                <td>{{ payment.invoice.student.get_full_name }}</td>
+                                <td class="text-success fw-bold">K {{ payment.amount|floatformat:2 }}</td>
+                                <td>{{ payment.payment_date|date:"M d, Y" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-4">No recent payments</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">System Alerts</h5>
+            </div>
+            <div class="card-body">
+                {% if alerts.sync_failures %}
+                <div class="alert alert-warning d-flex align-items-center">
+                    <i class="bi bi-exclamation-triangle me-3" style="font-size: 1.5rem;"></i>
+                    <div>
+                        <strong>Sync Failures</strong><br>
+                        {{ alerts.sync_failures }} sync operations failed in the last 24 hours
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if alerts.overdue_invoices %}
+                <div class="alert alert-danger d-flex align-items-center">
+                    <i class="bi bi-exclamation-circle me-3" style="font-size: 1.5rem;"></i>
+                    <div>
+                        <strong>Overdue Invoices</strong><br>
+                        {{ alerts.overdue_invoices }} invoices are overdue
+                        <a href="{% url 'frontend:arrears_list' %}" class="alert-link">View Details</a>
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if not alerts.sync_failures and not alerts.overdue_invoices %}
+                <div class="text-center text-muted py-4">
+                    <i class="bi bi-check-circle" style="font-size: 3rem; color: #198754;"></i>
+                    <p class="mt-2 mb-0">All systems operational</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row g-4 mt-2">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <a href="{% url 'frontend:student_register' %}" class="btn btn-outline-primary w-100 p-3">
+                            <i class="bi bi-person-plus-fill me-2"></i>
+                            Register Student
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="{% url 'frontend:invoice_generate' %}" class="btn btn-outline-success w-100 p-3">
+                            <i class="bi bi-file-earmark-plus me-2"></i>
+                            Generate Invoices
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="{% url 'frontend:payment_record' %}" class="btn btn-outline-info w-100 p-3">
+                            <i class="bi bi-cash-coin me-2"></i>
+                            Record Payment
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="{% url 'frontend:student_list' %}" class="btn btn-outline-secondary w-100 p-3">
+                            <i class="bi bi-people-fill me-2"></i>
+                            View All Students
+                        </a>
+                    </div>
+                </div>
+                <div class="row g-3 mt-1">
+                    <div class="col-md-3">
+                        <a href="{% url 'frontend:inventory_dashboard' %}" class="btn btn-outline-success w-100 p-3">
+                            <i class="bi bi-box-seam me-2"></i>
+                            Manage Inventory
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Collection Rate Doughnut Chart
+    const collectionRateCtx = document.getElementById('collectionRateChart').getContext('2d');
+    new Chart(collectionRateCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Collected', 'Outstanding'],
+            datasets: [{
+                data: [{{ finance.collection_rate|floatformat:1 }}, {{ finance.outstanding_rate|floatformat:1 }}],
+                backgroundColor: ['#198754', '#dc3545'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            cutout: '70%'
+        }
+    });
+    
+    // Collection Bar Chart (sample data - can be enhanced with real monthly data)
+    const collectionCtx = document.getElementById('collectionChart').getContext('2d');
+    new Chart(collectionCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+            datasets: [{
+                label: 'Collections (K)',
+                data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {{ finance.total_collected|default:0 }}],
+                backgroundColor: 'rgba(13, 110, 253, 0.8)',
+                borderRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return 'K ' + value.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

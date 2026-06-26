@@ -1,0 +1,79 @@
+{% extends 'base_frontend.html' %}
+
+{% block title %}Exam Scores - JDS Management{% endblock %}
+
+{% block page_title %}
+<i class="bi bi-journal-check text-primary"></i> Enter Exam Scores
+{% endblock %}
+
+{% block breadcrumb %}
+<ol class="breadcrumb breadcrumb-custom mb-0">
+    <li class="breadcrumb-item"><a href="{% url 'frontend:dashboard' %}">Dashboard</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'frontend:exam_list' %}">Exams</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{{ exam.name }}</li>
+</ol>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="mb-4">
+        <!-- Title handled in page_title block -->
+        <p class="text-muted mb-0">{{ exam.name }} - {{ exam.subject.name }} ({{ exam.classroom }})</p>
+    </div>
+
+    {% if not exam.is_administered %}
+    <div class="alert alert-warning">
+        This exam has not been marked as administered yet. Scores cannot be saved until it is confirmed as completed.
+    </div>
+    {% endif %}
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            {% if exam.is_administered %}
+            <form method="post">
+                {% csrf_token %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th>Student</th>
+                                <th>Admission No.</th>
+                                <th style="width: 180px;">Marks Obtained</th>
+                                <th style="width: 120px;">Absent</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for student in students %}
+                            <tr>
+                                <td>{{ student.user.get_full_name }}</td>
+                                <td>{{ student.admission_number }}</td>
+                                <td>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        min="0"
+                                        max="{{ exam.max_marks }}"
+                                        name="marks_{{ student.id }}"
+                                        class="form-control"
+                                    >
+                                </td>
+                                <td class="text-center">
+                                    <input type="checkbox" name="absent_{{ student.id }}">
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">Save Scores</button>
+                    <a href="{% url 'frontend:exam_list' %}" class="btn btn-outline-secondary">Back to Exams</a>
+                </div>
+            </form>
+            {% else %}
+            <div class="text-muted">Return after the exam has been administered and marked complete.</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

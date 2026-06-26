@@ -1,0 +1,20 @@
+{% extends "emails/base_email.html" %}
+
+{% block content %}
+<div class="header">
+    <h1>{{ title }}</h1>
+</div>
+
+<div class="content">
+    <p>Dear Parents, Students, and Staff,</p>
+    
+    <div style="background-color: #f8f9fa; padding: 20px; border-radius: 5px; margin: 20px 0;">
+        {{ message|linebreaks }}
+    </div>
+    
+    <p>For more information or if you have any questions, please contact the school office.</p>
+    
+    <p>Best regards,<br>
+    <strong>{{ sender_name }}</strong></p>
+</div>
+{% endblock %}
